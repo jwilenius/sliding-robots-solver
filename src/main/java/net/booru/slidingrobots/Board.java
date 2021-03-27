@@ -1,8 +1,7 @@
 package net.booru.slidingrobots;
 
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Represents the immovable pieces on a board of certain dimensions. A Board is immutable and never changes. The board
@@ -11,15 +10,13 @@ import java.util.Map;
 public final class Board {
     private final int iWidth;
     private final int iHeight;
-    private final HashMap<Point, Piece> iStartPieces;
     private final Piece[][] iImmutableBoard;
     private final Point iStartPosition;
     private final Point iGoalPosition;
 
-    public Board(final HashMap<Point, Piece> startPieces, final int width, final int height) {
+    public Board(final List<Pair<Point, Piece>> startPieces, final int width, final int height) {
         iWidth = width;
         iHeight = height;
-        iStartPieces = startPieces;
         iImmutableBoard = new Piece[width][height];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -29,9 +26,9 @@ public final class Board {
 
         Point startPosition = null;
         Point goalPosition = null;
-        for (Map.Entry<Point, Piece> entry : startPieces.entrySet()) {
-            final Point position = entry.getKey();
-            final Piece piece = entry.getValue();
+        for (Pair<Point, Piece> entry : startPieces) {
+            final Point position = entry.first;
+            final Piece piece = entry.second;
 
             if (piece.isImmovable()) {
                 iImmutableBoard[position.x][position.y] = piece;
@@ -53,36 +50,6 @@ public final class Board {
         iStartPosition = startPosition;
     }
 
-    /**
-     * Parse a string description of a board setup.
-     * <p>
-     * <pre>
-     * Example: map:helper_robot:1:4:blocker:1:6:blocker:2:0:main_robot:2:1:
-     *          blocker:2:3:blocker:4:0:helper_robot:5:6:blocker:6:1:"blocker:7:7:goal:3:0
-     * </pre>
-     *
-     * @param value a string representation of a {@link Board}.
-     *
-     * @return the Board corresponding to {@code value}.
-     */
-    public static Board valueOf(final String value) {
-        final HashMap<Point, Piece> pieces = new HashMap<>(20);
-        final String[] tokens = value.split(":");
-        final int start = tokens[0].equals("map") ? 1 : 0;
-
-        for (int i = start; i < tokens.length; i += 3) {
-            final Point position = new Point(Integer.parseInt(tokens[i + 1]), Integer.parseInt(tokens[i + 2]));
-            final Piece piece = Piece.valueOf(tokens[i]);
-            if (piece == Piece.main_robot) {
-                pieces.put(position, Piece.start);
-            } else {
-                pieces.put(position, piece);
-            }
-        }
-
-        return new Board(pieces, 8, 8);
-    }
-
     public boolean isGoalReached(final RobotsState robotsState) {
         return robotsState.getPositionX(0) == iGoalPosition.x && robotsState.getPositionY(0) == iGoalPosition.y;
     }
@@ -96,7 +63,8 @@ public final class Board {
      * @param direction   a direction resulting in possibly a new {@link RobotsState}, or the same {@link RobotsState}.
      * @param robotsState the current state
      *
-     * @return the new boardState after robot at {@code robotIndex} was moved in {@code direction}
+     * @return the new boardState after robot at {@code robotIndex} was moved in {@code direction}. If a the move result
+     *         in the same state as {@code robotState} then the {@code robotState} object is returned.
      */
     public RobotsState makeMove(final int robotIndex, final Direction direction, final RobotsState robotsState) {
         final int positionBeforeCollision = findPositionBeforeCollision(robotIndex, direction, robotsState);
@@ -169,13 +137,6 @@ public final class Board {
         }
     }
 
-    /**
-     * @return true if the move does not move the robot outside the board or onto an occupied position
-     */
-    private boolean isLegalMove(final int robotIndex, final Direction direction, final RobotsState robotsState) {
-        return false;
-    }
-
     @Override
     public String toString() {
         return printBoard(new RobotsState(new byte[0]));
@@ -183,6 +144,8 @@ public final class Board {
 
     public String printBoard(final RobotsState robotsState) {
         final StringBuilder sb = new StringBuilder();
+        sb.append("________________\n");
+
         for (int y = 0; y < iHeight; y++) {
             for (int x = 0; x < iWidth; x++) {
                 // first output robots then the immutable board
@@ -215,6 +178,7 @@ public final class Board {
             } // end row
             sb.append('\n');
         }
+        sb.append("----------------\n");
 
         return sb.toString();
     }
