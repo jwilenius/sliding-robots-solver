@@ -25,7 +25,7 @@ public class Main {
             System.out.println("No solution!");
         } else {
             System.out.println("Solution length: " + (solution.size() - 1));
-            System.out.println("Solution: " + solution);
+            System.out.println("Solution: " + RobotsState.toMovementsString(solution));
         }
     }
 }
