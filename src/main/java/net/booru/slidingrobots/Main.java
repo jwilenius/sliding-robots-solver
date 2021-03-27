@@ -1,5 +1,7 @@
 package net.booru.slidingrobots;
 
+import java.util.List;
+
 public class Main {
 
     public static void main(String[] args) {
@@ -12,7 +14,18 @@ public class Main {
         final Board board = game.getBoard();
         final RobotsState robotsState = game.getInitialRobotsState();
 
-        final Board board = Board.valueOf(boardStr);
-        System.out.println(board.toString());
+        System.out.println(board.printBoard(robotsState));
+
+        final Timer timer = new Timer();
+        final List<RobotsState> solution = new BreadthFirstSearchRecursive(board).run(robotsState);
+        timer.close();
+        System.out.println("Time ms: " + timer.getDurationMillis());
+
+        if (solution.isEmpty()) {
+            System.out.println("No solution!");
+        } else {
+            System.out.println("Solution length: " + (solution.size() - 1));
+            System.out.println("Solution: " + solution);
+        }
     }
 }
