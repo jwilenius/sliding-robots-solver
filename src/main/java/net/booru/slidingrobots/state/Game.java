@@ -66,7 +66,7 @@ public class Game {
         return iBoard;
     }
 
-    public RobotsState getInitialRobotsState() {
+    public RobotsState getRobotsState() {
         return iInitialRobotsState;
     }
 }
