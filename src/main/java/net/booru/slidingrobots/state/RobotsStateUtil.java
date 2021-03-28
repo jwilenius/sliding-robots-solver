@@ -1,10 +1,15 @@
 package net.booru.slidingrobots.state;
 
+import net.booru.slidingrobots.algorithm.Node;
+import net.booru.slidingrobots.common.Direction;
 import net.booru.slidingrobots.common.Pair;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -38,6 +43,49 @@ public final class RobotsStateUtil {
         }
 
         return new RobotsState(robotPositions);
+    }
+
+    /**
+     * Nodes are a linked list, this method will extract the path of {@link RobotsState}s
+     *
+     * @param endNode a node
+     *
+     * @return the list of states from start state to the final state in endNode.
+     */
+    public static LinkedList<RobotsState> extractRobotStatesFromNodePath(final Node endNode) {
+        final LinkedList<RobotsState> path = new LinkedList<>();
+        for (Node node = endNode; node != null; node = node.getPreviousNode()) {
+            path.addFirst(node.getState());
+        }
+        return path;
+    }
+
+    /**
+     * Compute neighboring states to {@code currentState} and return them as long as they are not the same as {@code
+     * currentState} and present in {@code seenStates}
+     *
+     * @param currentState the state to find the neighbors of
+     * @param seenStates   the states that we have already seen
+     *
+     * @return the new unseen beighbors of {@code currentState}, may be empty.
+     */
+    public static List<RobotsState> getNeighbors(final Board board, final RobotsState currentState,
+                                                 final Set<RobotsState> seenStates) {
+        final int robotCount = currentState.getRobotCount();
+        final Direction[] directions = Direction.values();
+
+        final List<RobotsState> expandedState = new ArrayList<>(robotCount * directions.length);
+
+        for (int robotIndex = 0; robotIndex < robotCount; robotIndex++) {
+            for (Direction direction : directions) {
+                //TODO possibly cache iBoard.makeMove
+                final RobotsState state = board.makeMove(robotIndex, direction, currentState);
+                if (state != currentState && !seenStates.contains(state)) {
+                    expandedState.add(state);
+                }
+            }
+        }
+        return expandedState;
     }
 
     /**

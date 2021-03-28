@@ -1,7 +1,7 @@
 package net.booru.slidingrobots;
 
 import net.booru.slidingrobots.algorithm.BreadthFirstSearchRecursive;
-import net.booru.slidingrobots.algorithm.EndCriteria;
+import net.booru.slidingrobots.algorithm.NoSolutionException;
 import net.booru.slidingrobots.algorithm.Solution;
 import net.booru.slidingrobots.state.Board;
 import net.booru.slidingrobots.state.Game;
@@ -24,8 +24,11 @@ public class Main {
 
         System.out.println(board.printBoard(robotsState));
 
-        final Solution solution = new BreadthFirstSearchRecursive(board).run(robotsState);
-
-        System.out.println(solution.toString());
+        try {
+            final Solution solution = new BreadthFirstSearchRecursive(board).run(robotsState);
+            System.out.println(solution.toString());
+        } catch (NoSolutionException e) {
+            System.out.println("No solution");
+        }
     }
 }
