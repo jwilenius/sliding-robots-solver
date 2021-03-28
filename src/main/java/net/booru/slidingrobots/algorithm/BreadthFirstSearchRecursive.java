@@ -1,55 +1,51 @@
 package net.booru.slidingrobots.algorithm;
 
-import net.booru.slidingrobots.common.Direction;
 import net.booru.slidingrobots.common.Timer;
 import net.booru.slidingrobots.state.Board;
 import net.booru.slidingrobots.state.RobotsState;
+import net.booru.slidingrobots.state.RobotsStateUtil;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-public class BreadthFirstSearchRecursive {
+public class BreadthFirstSearchRecursive implements SlidingRobotsSearchAlgorithm {
     private final Board iBoard;
-    private final EndCriteria iEndCriteria;
 
     /**
-     * @param board       the static board that we can make moves on
-     * @param endCriteria keeps track of the end criteria during search, knows when we have reach search target.
+     * @param board the static board that we can make moves on
      */
-    public BreadthFirstSearchRecursive(final Board board, final EndCriteria endCriteria) {
+    public BreadthFirstSearchRecursive(final Board board) {
         iBoard = board;
-        iEndCriteria = endCriteria;
     }
 
     /**
+     * @param startState  the initial state of the robotss.
+     * @param endCriteria keeps track of the end criteria during search, knows when we have reach search target.
+     *
      * @return The solution path including the start state, or empty if no solution was found.
      */
-    public Solution run(final RobotsState startState) {
-        try {
-            final Timer timer = new Timer();
+    @Override
+    public Solution run(final RobotsState startState, final EndCriteria endCriteria) throws NoSolutionException {
+        final Timer timer = new Timer();
 
-            final LinkedList<Node> nodesToExpand = new LinkedList<>();
-            final Set<RobotsState> seenStates = new HashSet<>(100000);
-            final Node startNode = new Node(startState, null);
-            nodesToExpand.add(startNode);
-            seenStates.add(startNode.getState());
+        final LinkedList<Node> nodesToExpand = new LinkedList<>();
+        final Set<RobotsState> seenStates = new HashSet<>(100000);
+        final Node startNode = new Node(startState, null);
+        nodesToExpand.add(startNode);
+        seenStates.add(startNode.getState());
 
-            final Statistics mutableStatistics = new Statistics();
+        final Statistics mutableStatistics = new Statistics();
 
-            final Node endNode = searchBFS(nodesToExpand, seenStates, iEndCriteria, mutableStatistics);
-            final LinkedList<RobotsState> solutionPath = extractRobotStatesFromNodePath(endNode);
-            timer.close();
+        final Node endNode = searchBFS(nodesToExpand, seenStates, endCriteria, mutableStatistics);
+        final LinkedList<RobotsState> solutionPath = RobotsStateUtil.extractRobotStatesFromNodePath(endNode);
+        timer.close();
 
-            mutableStatistics.setSolutionLength(solutionPath.size() - 1); // path includes start state
-            mutableStatistics.setTime(timer.getDurationMillis());
+        mutableStatistics.setSolutionLength(solutionPath.size() - 1); // path includes start state
+        mutableStatistics.setTime(timer.getDurationMillis());
 
-            return new Solution(solutionPath, mutableStatistics);
-        } catch (NoSolutionException e) {
-            return new Solution(List.of(), new Statistics());
-        }
+        return new Solution(solutionPath, mutableStatistics);
     }
 
 
@@ -77,42 +73,14 @@ public class BreadthFirstSearchRecursive {
             seenState.add(currentNode.getState());
         }
 
-        final List<RobotsState> expandedStates = expandFromState(currentNode, seenState);
-        for (RobotsState expandedState : expandedStates) {
-            nodesToExpand.add(new Node(expandedState, currentNode));
+        // todo: apply strategy to expanded states before returning... e.g. randomize
+        final List<RobotsState> neighbors = RobotsStateUtil.getNeighbors(iBoard, currentNode.getState(), seenState);
+        for (RobotsState neighbor : neighbors) {
+            nodesToExpand.add(new Node(neighbor, currentNode));
         }
-        seenState.addAll(expandedStates);
-        mutableStatistics.increaseStatesCreated(expandedStates.size());
+        seenState.addAll(neighbors);
+        mutableStatistics.increaseStatesCreated(neighbors.size());
 
         return searchBFS(nodesToExpand, seenState, updatedEndCriteria, mutableStatistics);
     }
-
-    private List<RobotsState> expandFromState(final Node currentNode, final Set<RobotsState> seenStates) {
-        final RobotsState currentState = currentNode.getState();
-        final int robotCount = currentState.getRobotCount();
-        final Direction[] directions = Direction.values();
-
-        final List<RobotsState> expandedState = new ArrayList<>(robotCount * directions.length);
-
-        for (int robotIndex = 0; robotIndex < robotCount; robotIndex++) {
-            for (Direction direction : directions) {
-                //TODO possibly cache iBoard.makeMove
-                final RobotsState state = iBoard.makeMove(robotIndex, direction, currentState);
-                if (state != currentState && !seenStates.contains(state)) {
-                    expandedState.add(state);
-                }
-            }
-        }
-        // todo: apply strategy to expanded states before returning... e.g. randomize
-        return expandedState;
-    }
-
-    private LinkedList<RobotsState> extractRobotStatesFromNodePath(final Node endNode) {
-        final LinkedList<RobotsState> path = new LinkedList<>();
-        for (Node node = endNode; node != null; node = node.getPreviousNode()) {
-            path.addFirst(node.getState());
-        }
-        return path;
-    }
-
 }
