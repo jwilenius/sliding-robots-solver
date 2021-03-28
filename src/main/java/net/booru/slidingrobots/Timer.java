@@ -1,18 +1,15 @@
 package net.booru.slidingrobots;
 
-import java.time.Duration;
-import java.time.Instant;
-
 public class Timer {
-    private final Instant iStart = Instant.now();
-    private Duration iDurationMillis;
+    private final long iStart = System.nanoTime();
+    private long iDurationNanos;
 
     public void close() {
-        iDurationMillis = Duration.between(iStart, Instant.now());
+        iDurationNanos = System.nanoTime() - iStart;
     }
 
-    public long getDurationMillis() {
-        return iDurationMillis.toMillis();
+    public double getDurationMillis() {
+        return iDurationNanos / 1000_000.0;
     }
 
     @Override
