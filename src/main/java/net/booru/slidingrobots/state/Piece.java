@@ -1,9 +1,9 @@
 package net.booru.slidingrobots.state;
 
 public enum Piece {
+    main_robot,
     helper_robot,
     blocker,
-    main_robot,
     start,
     goal,
     empty;
