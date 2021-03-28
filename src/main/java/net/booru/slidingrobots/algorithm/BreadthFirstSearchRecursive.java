@@ -1,4 +1,9 @@
-package net.booru.slidingrobots;
+package net.booru.slidingrobots.algorithm;
+
+import net.booru.slidingrobots.common.Direction;
+import net.booru.slidingrobots.common.Timer;
+import net.booru.slidingrobots.state.Board;
+import net.booru.slidingrobots.state.RobotsState;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -9,32 +14,6 @@ import java.util.Set;
 public class BreadthFirstSearchRecursive {
     private final Board iBoard;
     private final EndCriteria iEndCriteria;
-
-    /**
-     * Keep track of the path to the end state.
-     */
-    public static class Node {
-        private final Node iPreviousNode;
-        private final RobotsState iState;
-
-        public Node(final RobotsState state, final Node previous) {
-            iState = state;
-            iPreviousNode = previous;
-        }
-
-        public RobotsState getState() {
-            return iState;
-        }
-
-        public Node getPreviousNode() {
-            return iPreviousNode;
-        }
-
-        @Override
-        public String toString() {
-            return iState.toString();
-        }
-    }
 
     /**
      * @param board       the static board that we can make moves on
@@ -88,11 +67,11 @@ public class BreadthFirstSearchRecursive {
         mutableStatistics.increaseStatesVisited(1);
 
         final EndCriteria updatedEndCriteria = endCriteria.update(currentNode.getState());
-        final EndCriteria.Result result = updatedEndCriteria.getResult();
+        final Result result = updatedEndCriteria.getResult();
 
-        if (result == EndCriteria.Result.FULL) {
+        if (result == Result.FULL) {
             return currentNode;
-        } else if (result == EndCriteria.Result.PARTIAL) {
+        } else if (result == Result.PARTIAL) {
             seenState.clear(); // todo: this may need to be optimized? profile this.
             nodesToExpand.clear(); // todo: this may need to be optimized? profile this.
             seenState.add(currentNode.getState());
@@ -136,8 +115,4 @@ public class BreadthFirstSearchRecursive {
         return path;
     }
 
-    private static class NoSolutionException extends Exception {
-        public NoSolutionException() {
-        }
-    }
 }

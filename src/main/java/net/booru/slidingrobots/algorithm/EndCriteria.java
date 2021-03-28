@@ -1,4 +1,7 @@
-package net.booru.slidingrobots;
+package net.booru.slidingrobots.algorithm;
+
+import net.booru.slidingrobots.state.Board;
+import net.booru.slidingrobots.state.RobotsState;
 
 /**
  * A mutable end state tracker that knows when we reach the end state in the search.
@@ -78,12 +81,6 @@ public class EndCriteria {
 
     public Result getResult() {
         return iResult;
-    }
-
-    public enum Result {
-        NONE,
-        PARTIAL,
-        FULL;
     }
 
 }

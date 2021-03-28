@@ -1,4 +1,4 @@
-package net.booru.slidingrobots;
+package net.booru.slidingrobots.algorithm;
 
 public class Statistics {
     private int iStatesCreated;

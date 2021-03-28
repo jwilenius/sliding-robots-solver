@@ -1,5 +1,12 @@
 package net.booru.slidingrobots;
 
+import net.booru.slidingrobots.algorithm.BreadthFirstSearchRecursive;
+import net.booru.slidingrobots.algorithm.EndCriteria;
+import net.booru.slidingrobots.algorithm.Solution;
+import net.booru.slidingrobots.state.Board;
+import net.booru.slidingrobots.state.Game;
+import net.booru.slidingrobots.state.RobotsState;
+
 public class Main {
 
     public static void main(String[] args) {
@@ -20,7 +27,6 @@ public class Main {
         final boolean isOneWay = false;
         final EndCriteria endCriteria = new EndCriteria(board, isOneWay);
         final Solution solution = new BreadthFirstSearchRecursive(board, endCriteria).run(robotsState);
-
         System.out.println(solution.toString());
     }
 }

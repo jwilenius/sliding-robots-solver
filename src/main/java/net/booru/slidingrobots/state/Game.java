@@ -1,4 +1,6 @@
-package net.booru.slidingrobots;
+package net.booru.slidingrobots.state;
+
+import net.booru.slidingrobots.common.Pair;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -52,12 +54,12 @@ public class Game {
             }
         }
 
-        final List<Pair<Point, Piece>> robots =
+        final List<Pair<Point, Piece>> robotList =
                 pieces.stream()
                       .filter(pointPieceEntry -> !pointPieceEntry.second.isImmovable())
                       .collect(Collectors.toList());
 
-        return new Game(new Board(pieces, size, size), new RobotsState(robots));
+        return new Game(new Board(pieces, size, size), RobotsStateUtil.valueOf(robotList));
     }
 
     public Board getBoard() {
