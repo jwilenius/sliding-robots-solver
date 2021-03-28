@@ -8,10 +8,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Game {
+    private final boolean iIsOneWay;
     private final Board iBoard;
     private final RobotsState iInitialRobotsState;
 
-    public Game(final Board board, final RobotsState initialRobotsState) {
+    public Game(final boolean isOneWay, final Board board, final RobotsState initialRobotsState) {
+        iIsOneWay = isOneWay;
         iBoard = board;
         iInitialRobotsState = initialRobotsState;
     }
@@ -33,13 +35,19 @@ public class Game {
     public static Game valueOf(final String value) {
         final java.util.List<Pair<Point, Piece>> pieces = new ArrayList<>(20);
         final String[] tokens = value.split(":");
-        final int start = tokens[0].startsWith("map") ? 1 : 0;
 
-        final int size;
-        if (start == 1 && tokens[0].contains("_")) {
-            size = Integer.parseInt(tokens[0].split("_")[1]);
-        } else {
-            size = 8;
+        if (!tokens[0].startsWith("map")) {
+            throw new IllegalArgumentException("map string must start with map:sizeX:sizeY");
+        }
+
+        final int width = Integer.parseInt(tokens[1]);
+        final int height = Integer.parseInt(tokens[1]);
+
+        int start = 3;
+        boolean isOneWay = false;
+        if (tokens[3].equals("oneway")) {
+            isOneWay = true;
+            start = 4;
         }
 
         for (int i = start; i < tokens.length; i += 3) {
@@ -59,7 +67,7 @@ public class Game {
                       .filter(pointPieceEntry -> !pointPieceEntry.second.isImmovable())
                       .collect(Collectors.toList());
 
-        return new Game(new Board(pieces, size, size), RobotsStateUtil.valueOf(robotList));
+        return new Game(isOneWay, new Board(pieces, width, height), RobotsStateUtil.valueOf(robotList));
     }
 
     public Board getBoard() {
@@ -68,5 +76,9 @@ public class Game {
 
     public RobotsState getRobotsState() {
         return iInitialRobotsState;
+    }
+
+    public boolean isOneWay() {
+        return iIsOneWay;
     }
 }
