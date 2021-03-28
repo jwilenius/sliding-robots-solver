@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class BreadthFirstSearchRecursive {
     private final Board iBoard;
-    private final EndCriteria iMutableEndCriteria;
+    private final EndCriteria iEndCriteria;
 
     /**
      * Keep track of the path to the end state.
@@ -37,12 +37,12 @@ public class BreadthFirstSearchRecursive {
     }
 
     /**
-     * @param board              the static board that we can make moves on
-     * @param mutableEndCriteria keeps track of the end criteria during search, knows when we have reach search target.
+     * @param board       the static board that we can make moves on
+     * @param endCriteria keeps track of the end criteria during search, knows when we have reach search target.
      */
-    public BreadthFirstSearchRecursive(final Board board, final EndCriteria mutableEndCriteria) {
+    public BreadthFirstSearchRecursive(final Board board, final EndCriteria endCriteria) {
         iBoard = board;
-        iMutableEndCriteria = mutableEndCriteria;
+        iEndCriteria = endCriteria;
     }
 
     /**
@@ -60,7 +60,7 @@ public class BreadthFirstSearchRecursive {
 
             final Statistics mutableStatistics = new Statistics();
 
-            final Node endNode = searchBFS(nodesToExpand, seenStates, iMutableEndCriteria, mutableStatistics);
+            final Node endNode = searchBFS(nodesToExpand, seenStates, iEndCriteria, mutableStatistics);
             final LinkedList<RobotsState> solutionPath = extractRobotStatesFromNodePath(endNode);
             timer.close();
 
@@ -87,7 +87,8 @@ public class BreadthFirstSearchRecursive {
         final Node currentNode = nodesToExpand.poll();
         mutableStatistics.increaseStatesVisited(1);
 
-        final EndCriteria.Result result = endCriteria.checkAndUpdate(currentNode.getState());
+        final EndCriteria updatedEndCriteria = endCriteria.update(currentNode.getState());
+        final EndCriteria.Result result = updatedEndCriteria.getResult();
 
         if (result == EndCriteria.Result.FULL) {
             return currentNode;
@@ -104,7 +105,7 @@ public class BreadthFirstSearchRecursive {
         seenState.addAll(expandedStates);
         mutableStatistics.increaseStatesCreated(expandedStates.size());
 
-        return searchBFS(nodesToExpand, seenState, endCriteria, mutableStatistics);
+        return searchBFS(nodesToExpand, seenState, updatedEndCriteria, mutableStatistics);
     }
 
     private List<RobotsState> expandFromState(final Node currentNode, final Set<RobotsState> seenStates) {

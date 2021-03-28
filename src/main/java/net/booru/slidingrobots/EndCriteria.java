@@ -6,8 +6,9 @@ package net.booru.slidingrobots;
 public class EndCriteria {
     private final boolean iIsOneWay;
     private final Board iBoard;
-    private boolean iIsGoalReached;
-    private boolean iIsStartReached;
+    private final boolean iIsGoalReached;
+    private final boolean iIsStartReached;
+    private final Result iResult;
 
     /**
      * @param board    the board to check the end criteria against
@@ -15,8 +16,16 @@ public class EndCriteria {
      *                 back to start (false).
      */
     public EndCriteria(final Board board, final boolean isOneWay) {
+        this(board, isOneWay, false, false, Result.NONE);
+    }
+
+    private EndCriteria(final Board board, final boolean isOneWay, final boolean isGoalReached,
+                        final boolean isStartReached, final Result result) {
         iBoard = board;
         iIsOneWay = isOneWay;
+        iIsGoalReached = isGoalReached;
+        iIsStartReached = isStartReached;
+        iResult = result;
     }
 
     /**
@@ -26,27 +35,38 @@ public class EndCriteria {
      *
      * @return true if the end criteria has been reached.
      */
-    public Result checkAndUpdate(final RobotsState robotsState) {
+    public EndCriteria update(final RobotsState robotsState) {
         if (iIsOneWay) {
-            iIsGoalReached = isGoalReached(robotsState);
-            return iIsGoalReached ? Result.FULL : Result.NONE;
+            return isGoalReached(robotsState)
+                    ? withStateUpdate(true, false, Result.FULL)
+                    : withStateUpdate(false, false, Result.NONE);
         } else { // Two way game
             final boolean isGoalReached = isGoalReached(robotsState);
             if (isGoalReached && !iIsGoalReached) {
                 // We have reached the first part of the goal
-                iIsGoalReached = true;
-                return Result.PARTIAL; // only return this once!
+                return withStateUpdate(true, false, Result.PARTIAL); // only return this once!
             }
 
+            // only check if start is reached after goal was reached.
             if (iIsGoalReached) {
-                // only check if in start after goal is reached.
-                iIsStartReached = isStartReached(robotsState);
-                return iIsStartReached ? Result.FULL : Result.NONE;
+                return isStartReached(robotsState)
+                        ? withStateUpdate(true, true, Result.FULL)
+                        : withStateUpdate(true, false, Result.NONE); // none since no new result
             }
         }
 
-        return Result.NONE;
+        return withStateUpdate(false, false, Result.NONE);
     }
+
+    private EndCriteria withStateUpdate(final boolean isGoalReached,
+                                        final boolean isStartReached,
+                                        final Result result) {
+        if (isGoalReached == iIsGoalReached && isStartReached == iIsStartReached && iResult == result) {
+            return this;
+        }
+        return new EndCriteria(iBoard, iIsOneWay, isGoalReached, isStartReached, result);
+    }
+
 
     private boolean isGoalReached(final RobotsState robotsState) {
         return iIsGoalReached || iBoard.isGoalReached(robotsState);
@@ -54,6 +74,10 @@ public class EndCriteria {
 
     private boolean isStartReached(final RobotsState robotsState) {
         return iIsStartReached || iBoard.isStartReached(robotsState);
+    }
+
+    public Result getResult() {
+        return iResult;
     }
 
     public enum Result {

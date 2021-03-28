@@ -18,8 +18,8 @@ public class Main {
         System.out.println(board.printBoard(robotsState));
 
         final boolean isOneWay = false;
-        final EndCriteria mutableEndCriteria = new EndCriteria(board, isOneWay);
-        final Solution solution = new BreadthFirstSearchRecursive(board, mutableEndCriteria).run(robotsState);
+        final EndCriteria endCriteria = new EndCriteria(board, isOneWay);
+        final Solution solution = new BreadthFirstSearchRecursive(board, endCriteria).run(robotsState);
 
         System.out.println(solution.toString());
     }
