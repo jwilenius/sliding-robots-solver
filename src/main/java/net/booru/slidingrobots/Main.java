@@ -20,7 +20,7 @@ public class Main {
         System.out.println("Map:\n" + boardStr);
         final Game game = Game.valueOf(boardStr);
         final Board board = game.getBoard();
-        final RobotsState robotsState = game.getInitialRobotsState();
+        final RobotsState robotsState = game.getRobotsState();
 
         System.out.println(board.printBoard(robotsState));
 
