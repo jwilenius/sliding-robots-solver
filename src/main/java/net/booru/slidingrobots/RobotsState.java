@@ -16,11 +16,11 @@ public final class RobotsState {
      * @param robotPositions the positions of robots as follows [main_robot_x, main_robot_y, helper_robot_1_x,
      *                       helper_robot_2_x, ..., helper_robot_n_x, helper_robot_n_x]
      */
-    public RobotsState(byte[] robotPositions) {
+    public RobotsState(final byte[] robotPositions) {
         iPositions = robotPositions;
     }
 
-    public RobotsState(List<Pair<Point, Piece>> robots) {
+    public RobotsState(final List<Pair<Point, Piece>> robots) {
         final Optional<Pair<Point, Piece>> mainRobot =
                 robots.stream().filter(pair -> pair.second == Piece.main_robot).findFirst();
         if (mainRobot.isEmpty()) {
@@ -52,7 +52,7 @@ public final class RobotsState {
         return iPositions.length / 2;
     }
 
-    public RobotsState withPositionX(int robotIndex, int x) {
+    public RobotsState withPositionX(final int robotIndex, final int x) {
         if (getPositionX(robotIndex) == x) {
             return this;
         }
@@ -63,7 +63,7 @@ public final class RobotsState {
         return new RobotsState(positions);
     }
 
-    public RobotsState withPositionY(int robotIndex, int y) {
+    public RobotsState withPositionY(final int robotIndex, final int y) {
         if (getPositionY(robotIndex) == y) {
             return this;
         }
@@ -74,11 +74,11 @@ public final class RobotsState {
         return new RobotsState(positions);
     }
 
-    public int getPositionX(int robotIndex) {
+    public int getPositionX(final int robotIndex) {
         return iPositions[2 * robotIndex];
     }
 
-    public int getPositionY(int robotIndex) {
+    public int getPositionY(final int robotIndex) {
         return iPositions[2 * robotIndex + 1];
     }
 
