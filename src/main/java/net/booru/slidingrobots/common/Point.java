@@ -3,25 +3,25 @@ package net.booru.slidingrobots.common;
 import java.util.Objects;
 
 public class Point {
-    private final int iX;
-    private final int iY;
+    public final int x;
+    public final int y;
 
     public Point(final int x, final int y) {
-        this.iX = x;
-        this.iY = y;
+        this.x = x;
+        this.y = y;
     }
 
     public int getX() {
-        return iX;
+        return x;
     }
 
     public int getY() {
-        return iY;
+        return y;
     }
 
     @Override
     public String toString() {
-        return "(" + iX + ',' + iY + ')';
+        return "(" + x + ',' + y + ')';
     }
 
     @Override
@@ -33,11 +33,11 @@ public class Point {
             return false;
         }
         final Point point = (Point) o;
-        return iX == point.iX && iY == point.iY;
+        return x == point.x && y == point.y;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(iX, iY);
+        return Objects.hash(x, y);
     }
 }

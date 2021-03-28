@@ -1,8 +1,8 @@
 package net.booru.slidingrobots.state;
 
 import net.booru.slidingrobots.common.Pair;
+import net.booru.slidingrobots.common.Point;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
