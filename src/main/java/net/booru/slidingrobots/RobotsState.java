@@ -139,6 +139,25 @@ public final class RobotsState {
             final RobotsState currentState = moves.get(i);
             final int robotIndex = indexOfFirstDifference(previousState, currentState);
 
+            sb.append('(').append(currentState.getPositionX(robotIndex))
+              .append(',').append(currentState.getPositionY(robotIndex)).append(')')
+              .append(':').append(robotIndex)
+              .append(' ');
+        }
+
+        return sb.toString();
+    }
+
+    public static String toMovementsStringVerbose(final List<RobotsState> moves) {
+        final StringBuilder sb = new StringBuilder(100);
+
+        sb.append("Moves: ");
+
+        for (int i = 1; i < moves.size(); i++) {
+            final RobotsState previousState = moves.get(i - 1);
+            final RobotsState currentState = moves.get(i);
+            final int robotIndex = indexOfFirstDifference(previousState, currentState);
+
             final String robotName = (robotIndex == 0) ? "MainRobot" : "HelperRobot-" + robotIndex;
             sb.append(robotName)
               .append(" -> (")
