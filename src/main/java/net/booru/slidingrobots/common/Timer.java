@@ -1,4 +1,4 @@
-package net.booru.slidingrobots;
+package net.booru.slidingrobots.common;
 
 public class Timer {
     private final long iStart = System.nanoTime();

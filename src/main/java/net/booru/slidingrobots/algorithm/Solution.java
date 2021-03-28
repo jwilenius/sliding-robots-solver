@@ -1,4 +1,7 @@
-package net.booru.slidingrobots;
+package net.booru.slidingrobots.algorithm;
+
+import net.booru.slidingrobots.state.RobotsState;
+import net.booru.slidingrobots.state.RobotsStateUtil;
 
 import java.util.List;
 
@@ -28,11 +31,9 @@ public class Solution {
         if (isEmpty()) {
             return "No solution!";
         } else {
-            StringBuilder sb = new StringBuilder();
-            sb.append(getStatistics()).append("\n");
-            sb.append("Solution: ").append("\n")
-              .append(RobotsState.toMovementsString(getSolutionPath())).append("\n");
-            return sb.toString();
+            return getStatistics() + "\n" +
+                   "Solution: " + "\n" +
+                   RobotsStateUtil.toMovementsString(getSolutionPath()) + "\n";
         }
     }
 }

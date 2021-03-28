@@ -1,4 +1,9 @@
-package net.booru.slidingrobots;
+package net.booru.slidingrobots.algorithm;
+
+import net.booru.slidingrobots.common.Direction;
+import net.booru.slidingrobots.common.Timer;
+import net.booru.slidingrobots.state.Board;
+import net.booru.slidingrobots.state.RobotsState;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -10,31 +15,8 @@ public class BreadthFirstSearchRecursive {
     private final Board iBoard;
 
     /**
-     * Keep track of the path to the end state.
+     * @param board       the static board that we can make moves on
      */
-    public static class Node {
-        private final Node iPreviousNode;
-        private final RobotsState iState;
-
-        public Node(final RobotsState state, final Node previous) {
-            iState = state;
-            iPreviousNode = previous;
-        }
-
-        public RobotsState getState() {
-            return iState;
-        }
-
-        public Node getPreviousNode() {
-            return iPreviousNode;
-        }
-
-        @Override
-        public String toString() {
-            return iState.toString();
-        }
-    }
-
     public BreadthFirstSearchRecursive(final Board board) {
         iBoard = board;
     }
@@ -122,8 +104,4 @@ public class BreadthFirstSearchRecursive {
         return path;
     }
 
-    private static class NoSolutionException extends Exception {
-        public NoSolutionException() {
-        }
-    }
 }

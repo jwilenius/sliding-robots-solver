@@ -1,4 +1,4 @@
-package net.booru.slidingrobots;
+package net.booru.slidingrobots.common;
 
 import java.util.Objects;
 

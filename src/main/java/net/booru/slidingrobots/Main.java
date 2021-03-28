@@ -1,5 +1,12 @@
 package net.booru.slidingrobots;
 
+import net.booru.slidingrobots.algorithm.BreadthFirstSearchRecursive;
+import net.booru.slidingrobots.algorithm.EndCriteria;
+import net.booru.slidingrobots.algorithm.Solution;
+import net.booru.slidingrobots.state.Board;
+import net.booru.slidingrobots.state.Game;
+import net.booru.slidingrobots.state.RobotsState;
+
 public class Main {
 
     public static void main(String[] args) {

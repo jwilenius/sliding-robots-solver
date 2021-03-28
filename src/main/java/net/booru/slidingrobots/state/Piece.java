@@ -1,4 +1,4 @@
-package net.booru.slidingrobots;
+package net.booru.slidingrobots.state;
 
 public enum Piece {
     helper_robot,

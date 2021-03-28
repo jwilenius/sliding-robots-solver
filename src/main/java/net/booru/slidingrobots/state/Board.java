@@ -1,4 +1,7 @@
-package net.booru.slidingrobots;
+package net.booru.slidingrobots.state;
+
+import net.booru.slidingrobots.common.Direction;
+import net.booru.slidingrobots.common.Pair;
 
 import java.awt.*;
 import java.util.List;
