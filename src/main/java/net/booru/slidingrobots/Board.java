@@ -152,11 +152,7 @@ public final class Board {
                 final int robotIndex = robotsState.getRobotAtPosition(x, y);
                 if (robotIndex != -1) {
                     // output robot
-                    if (robotIndex == 0) {
-                        sb.append("@ ");
-                    } else if (robotIndex > 0) {
-                        sb.append("h ");
-                    }
+                    sb.append(robotIndex).append(' ');
                 } else {
                     // output board
                     final Piece piece = iImmutableBoard[x][y];
