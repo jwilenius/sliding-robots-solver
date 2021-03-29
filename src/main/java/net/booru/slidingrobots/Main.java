@@ -20,16 +20,13 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        final String exampleMap =
-                // "map8:8:helper_robot:1:4:blocker:1:6:blocker:2:0:main_robot:2:1:blocker:2:3:blocker:4:0:helper_robot
-                // :5:6:blocker:6:1:blocker:7:7:goal:3:0";
-                "map:8:8:blocker:0:0:blocker:0:4:blocker:2:4:blocker:2:5:blocker:3:1:helper_robot:3:4:helper_robot:4" +
-                ":1" +
-                ":blocker:4:6:main_robot:5:5:blocker:5:7:blocker:7:0:goal:6:7";
+        final String exampleMap = "map:8:8:blocker:0:0:blocker:0:4:blocker:2:4:blocker:2:5:blocker:3:1:" +
+                "helper_robot:3:4:helper_robot:4:1:blocker:4:6:main_robot:5:5:blocker:5:7:blocker:7:0:goal:6:7";
         if (args.length == 0) {
             System.out.println("\nRunning example map!");
-            System.out.println(" args: --solve <map-string>    : solve the provided map, se below for map format.");
-            System.out.println("       --profile               : generate random maps and calculate average time.");
+            System.out.println(" args: --solve <map-string>    : Solve the provided map, se below for map format.");
+            System.out.println("       --profile <runs count>  : Generate random maps and calculate average time.");
+            System.out.println("                               : A value of 0 means infinite, no maps are saved.");
             singleRun(exampleMap);
         } else {
             switch (args[0]) {
@@ -37,12 +34,10 @@ public class Main {
                     singleRun(args[1]);
                     break;
                 case "--profile":
-                    multiRun();
+                    multiRun(Integer.parseInt(args[1]));
                     break;
             }
-
         }
-
     }
 
     private static void singleRun(final String mapString) {
@@ -65,19 +60,23 @@ public class Main {
     }
 
     /**
-     * For getting stats on average speed
+     * For getting stats on average speed and running profilers
      */
-    private static void multiRun() throws IOException {
-        final List<String> mapStrings = new LinkedList<>();
-        for (int i = 0; i < 1000; i++) {
-            mapStrings.add(MapStringGenerator.generate(8));
-        }
+    private static void multiRun(final int runCountArgument) throws IOException {
 
+        final boolean isSaveMapStrings = runCountArgument != 0;
+        final int actualRunCount = runCountArgument == 0 ? Integer.MAX_VALUE : runCountArgument;
+
+        final List<String> mapStrings = new LinkedList<>();
         double time = 0;
-        for (String mapString : mapStrings) {
-            System.out.println("Map:\n" + mapString);
+        int noSolutionCount = 0;
+        for (int i = 0; i < actualRunCount; i++) {
+            final String mapString = MapStringGenerator.generate(8);
+            if (isSaveMapStrings) {
+                mapStrings.add(mapString);
+            }
+
             final Game game = Game.valueOf(mapString);
-            System.out.println(game.getBoard().printBoard(game.getRobotsState()));
             try {
                 final Timer t = new Timer();
                 final boolean isOneWay = game.isOneWay();
@@ -86,19 +85,22 @@ public class Main {
                         new BreadthFirstSearchRecursive(game.getBoard()).run(game.getRobotsState(), endCriteria);
                 t.close();
                 time += t.getDurationMillis();
-                System.out.println(solution.toString());
             } catch (NoSolutionException e) {
-                System.out.println("No solution");
+                noSolutionCount++;
             }
         }
 
-        final Path outputDir = Path.of("junk/");
-        if (!Files.exists(outputDir)) {
-            Files.createDirectories(outputDir);
+        if (isSaveMapStrings) {
+            final Path outputDir = Path.of("junk/");
+            if (!Files.exists(outputDir)) {
+                Files.createDirectories(outputDir);
+            }
+            Files.write(Path.of("junk/maps.txt"), mapStrings, Charset.defaultCharset());
+            System.out.println("Maps dumped to file junk/maps.txt");
         }
-        Files.write(Path.of("junk/maps.txt"), mapStrings, Charset.defaultCharset());
-        System.out.println("Total time (ms) = " + time);
+        System.out.println("Total run count =   " + actualRunCount);
+        System.out.println("  no solution # =   " + noSolutionCount);
+        System.out.println("Total time (ms) =   " + time);
         System.out.println("Average time (ms) = " + (time / mapStrings.size()));
-        System.out.println("Maps dumped to file junk/maps.txt");
     }
 }
