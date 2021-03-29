@@ -92,6 +92,10 @@ public class Main {
             }
         }
 
+        final Path outputDir = Path.of("junk/");
+        if (!Files.exists(outputDir)) {
+            Files.createDirectories(outputDir);
+        }
         Files.write(Path.of("junk/maps.txt"), mapStrings, Charset.defaultCharset());
         System.out.println("Total time (ms) = " + time);
         System.out.println("Average time (ms) = " + (time / mapStrings.size()));
