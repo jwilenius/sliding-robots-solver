@@ -1,8 +1,10 @@
 package net.booru.slidingrobots;
 
+import net.booru.slidingrobots.algorithm.BreadthFirstSearchIterative;
 import net.booru.slidingrobots.algorithm.BreadthFirstSearchRecursive;
 import net.booru.slidingrobots.algorithm.EndCriteria;
 import net.booru.slidingrobots.algorithm.NoSolutionException;
+import net.booru.slidingrobots.algorithm.SlidingRobotsSearchAlgorithm;
 import net.booru.slidingrobots.algorithm.Solution;
 import net.booru.slidingrobots.common.Timer;
 import net.booru.slidingrobots.state.Board;
@@ -21,26 +23,43 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         final String exampleMap = "map:8:8:blocker:0:0:blocker:0:4:blocker:2:4:blocker:2:5:blocker:3:1:" +
-                "helper_robot:3:4:helper_robot:4:1:blocker:4:6:main_robot:5:5:blocker:5:7:blocker:7:0:goal:6:7";
+                                  "helper_robot:3:4:helper_robot:4:1:blocker:4:6:main_robot:5:5:blocker:5:7:" +
+                                  "blocker:7:0:goal:6:7";
+
         if (args.length == 0) {
             System.out.println("\nRunning example map!");
-            System.out.println(" args: --solve <map-string>    : Solve the provided map, se below for map format.");
-            System.out.println("       --profile <runs count>  : Generate random maps and calculate average time.");
-            System.out.println("                               : A value of 0 means infinite, no maps are saved.");
-            singleRun(exampleMap);
+            System.out.println("args: --alg <i|r> (--solve <str> | --profile <N>)" +
+                               "  --alg <i|r>            : iterative or recursive" +
+                               "  --solve <map-string>   : Solve the provided map, se below for map format.");
+            System.out.println("  --profile <runs count> : Generate random maps and calculate average time.");
+            System.out.println("                         : A value of 0 means infinite, no maps are saved.");
+            singleRun("i", exampleMap);
         } else {
-            switch (args[0]) {
+            if (!args[0].equals("--alg")) {
+                throw new IllegalArgumentException("expected --arg <i|r>");
+            }
+            switch (args[2]) {
                 case "--solve":
-                    singleRun(args[1]);
+                    singleRun(args[1], args[3]);
                     break;
                 case "--profile":
-                    multiRun(Integer.parseInt(args[1]));
+                    multiRun(args[1], Integer.parseInt(args[3]));
                     break;
             }
         }
     }
 
-    private static void singleRun(final String mapString) {
+    private static SlidingRobotsSearchAlgorithm chooseAlgorithm(final String algorithmType, final Board board) {
+        if (algorithmType.equals("i")) {
+            return new BreadthFirstSearchIterative(board);
+        }
+        if (algorithmType.equals("r")) {
+            return new BreadthFirstSearchRecursive(board);
+        }
+        throw new IllegalArgumentException("Expected algorithm 'i' or 'r'");
+    }
+
+    private static void singleRun(final String algorithmType, final String mapString) {
 
         final Game game = Game.valueOf(mapString);
         final Board board = game.getBoard();
@@ -52,7 +71,8 @@ public class Main {
 
         try {
             final EndCriteria endCriteria = new EndCriteria(board, isOneWay);
-            final Solution solution = new BreadthFirstSearchRecursive(board).run(robotsState, endCriteria);
+            final SlidingRobotsSearchAlgorithm searchAlgorithm = chooseAlgorithm(algorithmType, board);
+            final Solution solution = searchAlgorithm.run(robotsState, endCriteria);
             System.out.println(solution.toString());
         } catch (NoSolutionException e) {
             System.out.println("No solution");
@@ -62,7 +82,7 @@ public class Main {
     /**
      * For getting stats on average speed and running profilers
      */
-    private static void multiRun(final int runCountArgument) throws IOException {
+    private static void multiRun(final String algorithmType, final int runCountArgument) throws IOException {
 
         final boolean isSaveMapStrings = runCountArgument != 0;
         final int actualRunCount = runCountArgument == 0 ? Integer.MAX_VALUE : runCountArgument;
@@ -81,8 +101,8 @@ public class Main {
                 final Timer t = new Timer();
                 final boolean isOneWay = game.isOneWay();
                 final EndCriteria endCriteria = new EndCriteria(game.getBoard(), isOneWay);
-                final Solution solution =
-                        new BreadthFirstSearchRecursive(game.getBoard()).run(game.getRobotsState(), endCriteria);
+                final SlidingRobotsSearchAlgorithm searchAlgorithm = chooseAlgorithm(algorithmType, game.getBoard());
+                final Solution solution = searchAlgorithm.run(game.getRobotsState(), endCriteria);
                 t.close();
                 time += t.getDurationMillis();
             } catch (NoSolutionException e) {
