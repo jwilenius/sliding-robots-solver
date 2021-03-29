@@ -1,6 +1,15 @@
 package net.booru.slidingrobots.state;
 
+import net.booru.slidingrobots.common.Direction;
+import net.booru.slidingrobots.common.Pair;
+import net.booru.slidingrobots.common.Point;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Represents the current state of robot positions A RobotState is immutable.
@@ -14,6 +23,35 @@ public final class RobotsState {
      */
     public RobotsState(final byte[] robotPositions) {
         iPositions = robotPositions;
+    }
+
+
+    public static RobotsState valueOf(final List<Pair<Point, Piece>> robots) {
+        final Optional<Pair<Point, Piece>> mainRobot =
+                robots.stream().filter(pair -> pair.second == Piece.main_robot).findFirst();
+        if (mainRobot.isEmpty()) {
+            throw new IllegalArgumentException("No main robot");
+        }
+
+        final List<Pair<Point, Piece>> helperRobots =
+                robots.stream().filter(pair -> pair.second == Piece.helper_robot).collect(Collectors.toList());
+
+        if (helperRobots.size() + 1 != robots.size()) {
+            throw new IllegalArgumentException("Input contains other pieces than one main robot and helper robots");
+        }
+
+        final byte[] robotPositions = new byte[robots.size() * 2];
+        robotPositions[0] = (byte) mainRobot.get().first.x;
+        robotPositions[1] = (byte) mainRobot.get().first.y;
+
+        for (int i = 0; i < helperRobots.size(); i++) {
+            final Pair<Point, Piece> pointPiecePair = helperRobots.get(i);
+            final int index = 2 * (i + 1);
+            robotPositions[index] = (byte) pointPiecePair.first.x;
+            robotPositions[index + 1] = (byte) pointPiecePair.first.y;
+        }
+
+        return new RobotsState(robotPositions);
     }
 
     public int getRobotCount() {
@@ -85,6 +123,31 @@ public final class RobotsState {
             }
         }
         return -1;
+    }
+
+    /**
+     * Compute neighboring states to {@code this} state and return them as long as they are not the same as {@code this}
+     * state and not present in {@code seenStates}
+     *
+     * @param seenStates the states that we have already seen
+     *
+     * @return the new unseen neighbors of {@code currentState}, may be empty.
+     */
+    public List<RobotsState> getNeighbors(final Board board, final Set<RobotsState> seenStates) {
+        final int robotCount = getRobotCount();
+        final Direction[] directions = Direction.values();
+
+        final List<RobotsState> expandedState = new ArrayList<>(robotCount * directions.length);
+
+        for (int robotIndex = 0; robotIndex < robotCount; robotIndex++) {
+            for (Direction direction : directions) {
+                final RobotsState state = board.makeMove(robotIndex, direction, this);
+                if (!state.equals(this) && !seenStates.contains(state)) {
+                    expandedState.add(state);
+                }
+            }
+        }
+        return expandedState;
     }
 
     @Override

@@ -67,7 +67,7 @@ public class Game {
                       .filter(pointPieceEntry -> !pointPieceEntry.second.isImmovable())
                       .collect(Collectors.toList());
 
-        return new Game(isOneWay, new Board(pieces, width, height), RobotsStateUtil.valueOf(robotList));
+        return new Game(isOneWay, new Board(pieces, width, height), RobotsState.valueOf(robotList));
     }
 
     public Board getBoard() {

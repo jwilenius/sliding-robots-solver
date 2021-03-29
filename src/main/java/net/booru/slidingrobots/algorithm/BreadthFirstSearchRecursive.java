@@ -49,7 +49,7 @@ public class BreadthFirstSearchRecursive implements SlidingRobotsSearchAlgorithm
 
 
     private Node searchBFS(final LinkedList<Node> nodesToExpand,
-                           final Set<RobotsState> seenState,
+                           final Set<RobotsState> seenStates,
                            final Statistics mutableStatistics)
             throws NoSolutionException {
 
@@ -58,20 +58,20 @@ public class BreadthFirstSearchRecursive implements SlidingRobotsSearchAlgorithm
         }
 
         final Node currentNode = nodesToExpand.poll();
+        final RobotsState currentState = currentNode.getState();
         mutableStatistics.increaseStatesVisited(1);
 
-        if (iBoard.isGoalReached(currentNode.getState())) {
+        if (iBoard.isGoalReached(currentState)) {
             return currentNode;
         }
 
-        // todo: apply strategy to expanded states before returning... e.g. randomize
-        final List<RobotsState> neighbors = RobotsStateUtil.getNeighbors(iBoard, currentNode.getState(), seenState);
+        final List<RobotsState> neighbors = currentState.getNeighbors(iBoard, seenStates);
         for (RobotsState neighbor : neighbors) {
             nodesToExpand.add(new Node(neighbor, currentNode));
         }
-        seenState.addAll(neighbors);
+        seenStates.addAll(neighbors);
         mutableStatistics.increaseStatesCreated(neighbors.size());
 
-        return searchBFS(nodesToExpand, seenState, mutableStatistics);
+        return searchBFS(nodesToExpand, seenStates, mutableStatistics);
     }
 }
