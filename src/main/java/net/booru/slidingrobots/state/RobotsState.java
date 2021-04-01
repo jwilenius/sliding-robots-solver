@@ -141,7 +141,6 @@ public final class RobotsState {
 
         for (int robotIndex = 0; robotIndex < robotCount; robotIndex++) {
             for (Direction direction : directions) {
-                //TODO possibly cache iBoard.makeMove
                 final RobotsState state = board.makeMove(robotIndex, direction, this);
                 if (!state.equals(this) && !seenStates.contains(state)) {
                     expandedState.add(state);

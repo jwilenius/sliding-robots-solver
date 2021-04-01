@@ -69,12 +69,11 @@ public class BreadthFirstSearchRecursive implements SlidingRobotsSearchAlgorithm
         if (result == Result.FULL) {
             return currentNode;
         } else if (result == Result.PARTIAL) {
-            seenStates.clear(); // todo: this may need to be optimized? profile this.
-            nodesToExpand.clear(); // todo: this may need to be optimized? profile this.
+            seenStates.clear();
+            nodesToExpand.clear();
             seenStates.add(currentState);
         }
 
-        // todo: apply strategy to expanded states before returning... e.g. randomize
         final List<RobotsState> neighbors = currentState.getNeighbors(iBoard, seenStates);
         for (RobotsState neighbor : neighbors) {
             nodesToExpand.add(new Node(neighbor, currentNode));
