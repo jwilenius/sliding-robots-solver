@@ -33,7 +33,9 @@ public class Solution {
         } else {
             return getStatistics() + "\n" +
                    "Solution: " + "\n" +
-                   RobotsStateUtil.toMovementsString(getSolutionPath()) + "\n";
+                   RobotsStateUtil.toMovementsString(getSolutionPath()) + "\n" +
+                   RobotsStateUtil.toJsonResultString(getSolutionPath()) + "\n" +
+                   RobotsStateUtil.toMovesResultString(getSolutionPath()) + "\n";
         }
     }
 }
