@@ -2,7 +2,6 @@ package net.booru.slidingrobots;
 
 import net.booru.slidingrobots.algorithm.BreadthFirstSearchIterative;
 import net.booru.slidingrobots.algorithm.BreadthFirstSearchRecursive;
-import net.booru.slidingrobots.algorithm.EndCriteria;
 import net.booru.slidingrobots.algorithm.NoSolutionException;
 import net.booru.slidingrobots.algorithm.SlidingRobotsSearchAlgorithm;
 import net.booru.slidingrobots.algorithm.Solution;
@@ -70,9 +69,8 @@ public class Main {
         System.out.println(board.printBoard(robotsState));
 
         try {
-            final EndCriteria endCriteria = new EndCriteria(board, isOneWay);
             final SlidingRobotsSearchAlgorithm searchAlgorithm = chooseAlgorithm(algorithmType, board);
-            final Solution solution = searchAlgorithm.run(robotsState, endCriteria);
+            final Solution solution = searchAlgorithm.run(robotsState, game.getEndCriteria());
             System.out.println(solution.toString());
 
             int i = 0;
@@ -106,10 +104,8 @@ public class Main {
             final Game game = Game.valueOf(mapString);
             try {
                 final Timer t = new Timer();
-                final boolean isOneWay = game.isOneWay();
-                final EndCriteria endCriteria = new EndCriteria(game.getBoard(), isOneWay);
                 final SlidingRobotsSearchAlgorithm searchAlgorithm = chooseAlgorithm(algorithmType, game.getBoard());
-                final Solution solution = searchAlgorithm.run(game.getRobotsState(), endCriteria);
+                final Solution solution = searchAlgorithm.run(game.getRobotsState(), game.getEndCriteria());
                 t.close();
                 time += t.getDurationMillis();
             } catch (NoSolutionException e) {
