@@ -5,6 +5,7 @@ import net.booru.slidingrobots.algorithm.BreadthFirstSearchRecursive;
 import net.booru.slidingrobots.algorithm.NoSolutionException;
 import net.booru.slidingrobots.algorithm.SlidingRobotsSearchAlgorithm;
 import net.booru.slidingrobots.algorithm.Solution;
+import net.booru.slidingrobots.common.ArgumentParser;
 import net.booru.slidingrobots.common.Timer;
 import net.booru.slidingrobots.state.Board;
 import net.booru.slidingrobots.state.Game;
@@ -20,32 +21,51 @@ import java.util.List;
 
 public class Main {
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     public static void main(String[] args) throws IOException {
         final String exampleMap = "map:8:8:blocker:0:0:blocker:0:4:blocker:2:4:blocker:2:5:blocker:3:1:" +
                                   "helper_robot:3:4:helper_robot:4:1:blocker:4:6:main_robot:5:5:blocker:5:7:" +
                                   "blocker:7:0:goal:6:7";
 
-        if (args.length == 0) {
-            System.out.println("\nRunning example map!");
-            System.out.println("args: --alg <i|r> (--solve <str> | --profile <N>)" +
-                               "  --alg <i|r>            : iterative or recursive" +
-                               "  --solve <map-string>   : Solve the provided map, se below for map format.");
-            System.out.println("  --profile <runs count> : Generate random maps and calculate average time.");
-            System.out.println("                         : A value of 0 means infinite, no maps are saved.");
-            singleRun("i", exampleMap);
-        } else {
-            if (!args[0].equals("--alg")) {
-                throw new IllegalArgumentException("expected --arg <i|r>");
-            }
-            switch (args[2]) {
-                case "--solve":
-                    singleRun(args[1], args[3]);
-                    break;
-                case "--profile":
-                    multiRun(args[1], Integer.parseInt(args[3]));
-                    break;
-            }
+        final var argumentParser = new ArgumentParser()
+                .withSpecificArgument("--alg", List.of("i", "r"), "iterative or recursive solver")
+                .withSpecificArgument("--verbose", List.of(), "print board solution verbose")
+                .withGeneralArgument("--solve", List.of("<map-string>"),
+                        "Solve the provided map.\n       example: " + exampleMap)
+                .withGeneralArgument("--profile", List.of("<runs count>"),
+                                     "Generate random maps and calculate average time. A value of 0 means infinite, " +
+                                     "no maps are saved.")
+                .setRequired(List.of("--alg"))
+                .addConflicts("--solve", List.of("--profile"))
+                .addConflicts("--profile", List.of("--solve"));
+
+        argumentParser.parseArguments(args);
+
+        var alg = argumentParser.get("--alg");
+        var solve = argumentParser.get("--solve");
+        var profile = argumentParser.get("--profile");
+        var verbose = argumentParser.get("--verbose");
+
+        // alg.isPresent since required
+        // solve and profile are mutually exclusive by definition above
+
+        if (solve.isPresent()) {
+            singleRun(alg.get().getValue(), solve.get().getValue(), verbose.isPresent());
+            System.exit(1);
         }
+
+        if (profile.isPresent()) {
+            multiRun(alg.get().getValue(), profile.get().getValueAsInt());
+            System.exit(1);
+        }
+
+        // fallback no args, run example and print help
+        argumentParser.outputHelp();
+        System.out.println("--------------------------------");
+        System.out.println("Now we will run an example problem:");
+        singleRun(alg.get().getValue(), exampleMap, true);
+
+        System.exit(1);
     }
 
     private static SlidingRobotsSearchAlgorithm chooseAlgorithm(final String algorithmType, final Board board) {
@@ -58,24 +78,30 @@ public class Main {
         throw new IllegalArgumentException("Expected algorithm 'i' or 'r'");
     }
 
-    private static void singleRun(final String algorithmType, final String mapString) {
+    private static void singleRun(final String algorithmType, final String mapString, final boolean isVerbose) {
 
         final Game game = Game.valueOf(mapString);
         final Board board = game.getBoard();
         final RobotsState robotsState = game.getRobotsState();
 
-        System.out.println("Map-string:\n" + mapString);
-        System.out.println(board.printBoard(robotsState));
+        if (isVerbose) {
+            System.out.println("Map-string:\n" + mapString);
+            System.out.println(board.printBoard(robotsState));
+        }
 
         try {
             final SlidingRobotsSearchAlgorithm searchAlgorithm = chooseAlgorithm(algorithmType, board);
             final Solution solution = searchAlgorithm.run(robotsState, game.getEndCriteria());
-            System.out.println(solution.toString());
 
-            int i = 0;
-            for (RobotsState s : solution.getSolutionPath()) {
-                System.out.println("Board i=" + (i++));
-                System.out.println(board.printBoard(s));
+            if (isVerbose) {
+                System.out.println(solution.toStringVerbose());
+                int i = 0;
+                for (RobotsState s : solution.getSolutionPath()) {
+                    System.out.println("Board i=" + (i++));
+                    System.out.println(board.printBoard(s));
+                }
+            } else {
+                System.out.println(solution.toJsonOutputString());
             }
 
         } catch (NoSolutionException e) {
