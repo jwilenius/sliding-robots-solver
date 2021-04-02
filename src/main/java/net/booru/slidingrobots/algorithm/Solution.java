@@ -26,8 +26,15 @@ public class Solution {
         return iSolutionPath.isEmpty();
     }
 
-    @Override
-    public String toString() {
+    public String toJsonOutputString() {
+        if (isEmpty()) {
+            return "{}";
+        } else {
+            return RobotsStateUtil.toJsonResultString(getSolutionPath()) + "\n";
+        }
+    }
+
+    public String toStringVerbose() {
         if (isEmpty()) {
             return "No solution!";
         } else {
@@ -35,7 +42,19 @@ public class Solution {
                    "Solution: " + "\n" +
                    RobotsStateUtil.toMovementsString(getSolutionPath()) + "\n" +
                    RobotsStateUtil.toJsonResultString(getSolutionPath()) + "\n" +
-                   RobotsStateUtil.toMovesResultString(getSolutionPath()) + "\n";
+                   RobotsStateUtil.toMovesResultString(getSolutionPath()).replace("{Pos", "\n{Pos") + "\n";
         }
     }
+
+    @Override
+    public String toString() {
+        if (isEmpty()) {
+            return "No solution!";
+        } else {
+            return getStatistics() + "\n" +
+                   "Solution: " + "\n" +
+                   RobotsStateUtil.toMovesResultString(getSolutionPath()).replace("{Pos", "\n{Pos") + "\n";
+        }
+    }
+
 }
