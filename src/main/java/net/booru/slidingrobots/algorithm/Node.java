@@ -10,11 +10,17 @@ import java.util.Objects;
 public class Node {
     private final Node iPreviousNode;
     private final RobotsState iState;
+    private final int iDepth;
 
     public Node(final RobotsState state, final Node previous) {
+        this(state, previous, 0);
+    }
+
+    public Node(final RobotsState state, final Node previous, final int depth) {
         Objects.requireNonNull(state);
         iState = state;
         iPreviousNode = previous;
+        iDepth = depth;
     }
 
     public boolean hasPreviousNode() {
@@ -29,8 +35,12 @@ public class Node {
         return iPreviousNode;
     }
 
+    public int getDepth() {
+        return iDepth;
+    }
+
     @Override
     public String toString() {
-        return iState.toString();
+        return iState.toString() + ":" + iDepth;
     }
 }
