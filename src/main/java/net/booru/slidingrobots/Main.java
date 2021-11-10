@@ -31,7 +31,7 @@ public class Main {
                 .withSpecificArgument("--alg", List.of("i", "r"), "iterative or recursive solver")
                 .withSpecificArgument("--verbose", List.of(), "print board solution verbose")
                 .withGeneralArgument("--solve", List.of("<map-string>"),
-                                     "Solve the provided map.\n example: " + exampleMap)
+                        "Solve the provided map.\n       example: " + exampleMap)
                 .withGeneralArgument("--profile", List.of("<runs count>"),
                                      "Generate random maps and calculate average time. A value of 0 means infinite, " +
                                      "no maps are saved.")

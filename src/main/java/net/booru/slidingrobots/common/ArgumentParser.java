@@ -135,13 +135,14 @@ public class ArgumentParser {
     public void outputHelp() {
         System.out.println("--------------------------------------------");
         System.out.println("Help:");
+        final String indent = "    ";
         for (var entry : iArguments.values()) {
-            System.out.println(entry.toString());
+            System.out.println(indent + entry.toString());
         }
-        System.out.println("Required arguments:");
-        System.out.println(iRequiredArguments);
-        System.out.println("Disjoint arguments:");
-        System.out.println(iConflicts.toString().replace(", ", "\n"));
+        System.out.println("\nRequired arguments:");
+        System.out.println(indent + iRequiredArguments);
+        System.out.println("\nDisjoint arguments:");
+        System.out.println(indent + iConflicts);
         System.out.println("--------------------------------------------");
     }
 
@@ -195,7 +196,7 @@ public class ArgumentParser {
             }
             final StringJoiner joiner = new StringJoiner("|", "", "");
             iValueDescriptions.forEach(joiner::add);
-            return iName + " " + joiner.toString() + "  : " + iHelp;
+            return iName + " " + joiner + "  : " + iHelp;
         }
 
         public boolean isGeneralArgument() {
