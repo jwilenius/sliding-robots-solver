@@ -1,5 +1,8 @@
 package net.booru.slidingrobots.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -10,6 +13,8 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 public class ArgumentParser {
+    private final Logger iLogger = LoggerFactory.getLogger(ArgumentParser.class);
+
     private final HashMap<String, Argument> iArguments = new HashMap<>();
     private final HashMap<String, List<String>> iConflicts = new HashMap<>();
     private final List<String> iRequiredArguments = new ArrayList<>();
@@ -119,11 +124,10 @@ public class ArgumentParser {
     }
 
     private void outputHelpAndExit(final String token, final String message) {
-        System.out.println("\n !! The following argument is problematic: " + token);
+        iLogger.info("!! The following argument is problematic: {}", token);
         if (!message.isEmpty()) {
-            System.out.println(message);
+            iLogger.info(message);
         }
-        System.out.println();
         outputHelpAndExit();
     }
 
@@ -133,17 +137,17 @@ public class ArgumentParser {
     }
 
     public void outputHelp() {
-        System.out.println("--------------------------------------------");
-        System.out.println("Help:");
-        final String indent = "    ";
+        iLogger.info("--------------------------------------------");
+        iLogger.info("Help:");
+        final String indent = "    {}";
         for (var entry : iArguments.values()) {
-            System.out.println(indent + entry.toString());
+            iLogger.info(indent, entry.toString());
         }
-        System.out.println("\nRequired arguments:");
-        System.out.println(indent + iRequiredArguments);
-        System.out.println("\nDisjoint arguments:");
-        System.out.println(indent + iConflicts);
-        System.out.println("--------------------------------------------");
+        iLogger.info("Required arguments:");
+        iLogger.info(indent, iRequiredArguments);
+        iLogger.info("Disjoint arguments:");
+        iLogger.info(indent, iConflicts);
+        iLogger.info("--------------------------------------------");
     }
 
     public Optional<Argument> get(final String name) {
