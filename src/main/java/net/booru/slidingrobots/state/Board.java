@@ -4,6 +4,7 @@ import net.booru.slidingrobots.common.Direction;
 import net.booru.slidingrobots.common.Pair;
 import net.booru.slidingrobots.common.Point;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -147,10 +148,24 @@ public final class Board {
 
     public String printBoard(final RobotsState robotsState) {
         final StringBuilder sb = new StringBuilder();
-        sb.append("________________\n");
+        for (int y = -1; y < iHeight; y++) {
+            for (int x = -1; x < iWidth; x++) {
+                // output the coordinates
+                if (x == -1) {
+                    if (y == -1) {
+                        sb.append("   ");
+                    } else {
+                        sb.append(y).append("| ");
+                    }
+                    continue;
+                }
 
-        for (int y = 0; y < iHeight; y++) {
-            for (int x = 0; x < iWidth; x++) {
+                if (y == -1) {
+                    sb.append(x).append(' ');
+                    continue;
+                }
+
+
                 // first output robots then the immutable board
                 final int robotIndex = robotsState.getRobotAtPosition(x, y);
                 if (robotIndex != -1) {
@@ -175,10 +190,69 @@ public final class Board {
                     }
                 }
             } // end row
+            if (y == -1) {
+                sb.append("\n   ----------------");
+            }
             sb.append('\n');
         }
-        sb.append("----------------\n");
+        sb.append("   ----------------\n");
 
         return sb.toString();
+    }
+
+    public List<String> boardToLogLines(final RobotsState robotsState) {
+        final List<String> lines = new ArrayList<>();
+
+        for (int y = -1; y < iHeight; y++) {
+            final StringBuilder sb = new StringBuilder();
+
+            for (int x = -1; x < iWidth; x++) {
+                // output the coordinates
+                if (x == -1) {
+                    if (y == -1) {
+                        sb.append("    ");
+                    } else {
+                        sb.append(y).append(" | ");
+                    }
+                    continue;
+                }
+                if (y == -1) {
+                    sb.append(x).append(' ');
+                    continue;
+                }
+
+
+                // first output robots then the immutable board
+                final int robotIndex = robotsState.getRobotAtPosition(x, y);
+                if (robotIndex != -1) {
+                    // output robot
+                    sb.append(robotIndex).append(' ');
+                } else {
+                    // output board
+                    final Piece piece = iImmutableBoard[x][y];
+                    switch (piece) { //NOSONAR intentional skip of main_robot and helper
+                        case empty:
+                            sb.append(". ");
+                            break;
+                        case blocker:
+                            sb.append("# ");
+                            break;
+                        case goal:
+                            sb.append("G ");
+                            break;
+                        case start: // needs to be after main_robot since this is ascii...
+                            sb.append("S ");
+                            break;
+                    }
+                }
+            } // end row
+            lines.add(sb.toString());
+            if (y == -1) {
+                lines.add("    ----------------");
+            }
+        }
+        lines.add("    ----------------");
+
+        return lines;
     }
 }
