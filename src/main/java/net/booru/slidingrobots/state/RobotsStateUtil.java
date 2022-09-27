@@ -89,8 +89,8 @@ public final class RobotsStateUtil {
     }
 
     private static class Pos {
-        public int x;
-        public int y;
+        public final int x;
+        public final int y;
 
         public Pos(final int x, final int y) {
             this.x = x;
@@ -104,8 +104,8 @@ public final class RobotsStateUtil {
     }
 
     private static class Dir {
-        public int dx;
-        public int dy;
+        public final int dx;
+        public final int dy;
 
         public Dir(final int dx, final int dy) {
             this.dx = dx;
@@ -119,12 +119,14 @@ public final class RobotsStateUtil {
     }
 
     private static class Move {
-        public Dir dir;
-        public Pos pos;
+        public final Dir dir;
+        public final Pos pos;
+        public transient int robot; // exclude from gson JSON
 
-        public Move(final Dir dir, final Pos pos) {
+        public Move(final Dir dir, final Pos pos, final int robot) {
             this.dir = dir;
             this.pos = pos;
+            this.robot = robot;
         }
 
         @Override
@@ -181,7 +183,7 @@ public final class RobotsStateUtil {
             final int newY = currentState.getPositionY(robotIndex);
             final Dir dir = new Dir((int) Math.signum(newX - x), (int) Math.signum(newY - y));
 
-            final Move move = new Move(dir, pos);
+            final Move move = new Move(dir, pos, robotIndex);
             moves.add(move);
         }
 
@@ -193,13 +195,12 @@ public final class RobotsStateUtil {
      *
      * @param state1 the first state
      * @param state2 the second state != state1
-     *
      * @return the first robot index where the states differ.
      */
     private static int indexOfFirstDifference(final RobotsState state1, final RobotsState state2) {
         for (int i = 0; i < state2.getRobotCount(); i++) {
             if (state1.getPositionX(i) != state2.getPositionX(i) ||
-                state1.getPositionY(i) != state2.getPositionY(i)) {
+                    state1.getPositionY(i) != state2.getPositionY(i)) {
                 return i;
             }
         }
