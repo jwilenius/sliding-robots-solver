@@ -1,1 +1,1 @@
-java -Xss20m -jar target/sliding-robots-*.jar --profile 0
+java -Xss20m -jar target/sliding-robots-*.jar --profile 1000 $*
