@@ -24,17 +24,23 @@ public class Main {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     public static void main(String[] args) throws IOException {
         final String exampleMap = "map:8:8:blocker:0:0:blocker:0:4:blocker:2:4:blocker:2:5:blocker:3:1:" +
-                                  "helper_robot:3:4:helper_robot:4:1:blocker:4:6:main_robot:5:5:blocker:5:7:" +
-                                  "blocker:7:0:goal:6:7";
+                "helper_robot:3:4:helper_robot:4:1:blocker:4:6:main_robot:5:5:blocker:5:7:" +
+                "blocker:7:0:goal:6:7";
+
+        final String exampleMapCompact =
+                "m:8:8,b:0:0,b:0:4,b:2:4,b:2:5,b:3:1,h:3:4,h:4:1,b:4:6,r:5:5,b:5:7,b:7:0,g:6:7";
 
         final var argumentParser = new ArgumentParser()
                 .withSpecificArgument("--alg", List.of("i", "r"), "iterative or recursive solver")
                 .withSpecificArgument("--verbose", List.of(), "print board solution verbose")
                 .withGeneralArgument("--solve", List.of("<map-string>"),
-                        "Solve the provided map.\n       example: " + exampleMap)
+                        "Solve the provided map.\n" +
+                                "       example: " + exampleMap + "\n" +
+                                "       example: " + exampleMapCompact + "\n\n"
+                )
                 .withGeneralArgument("--profile", List.of("<runs count>"),
-                                     "Generate random maps and calculate average time. A value of 0 means infinite, " +
-                                     "no maps are saved.")
+                        "Generate random maps and calculate average time. A value of 0 means infinite, " +
+                                "no maps are saved.")
                 .setRequired(List.of("--alg"))
                 .addConflicts("--solve", List.of("--profile"))
                 .addConflicts("--profile", List.of("--solve"));
