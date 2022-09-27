@@ -4,3 +4,4 @@
 target/
 junk/
 .attach_*
+*.log
