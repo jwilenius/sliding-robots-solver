@@ -2,7 +2,10 @@ package net.booru.slidingrobots.algorithm;
 
 import net.booru.slidingrobots.state.RobotsState;
 import net.booru.slidingrobots.state.RobotsStateUtil;
+import org.apache.logging.log4j.util.Strings;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Solution {
@@ -30,19 +33,29 @@ public class Solution {
         if (isEmpty()) {
             return "{}";
         } else {
-            return RobotsStateUtil.toJsonResultString(getSolutionPath()) + "\n";
+            return RobotsStateUtil.toStringJsonResult(getSolutionPath()) + "\n";
         }
     }
 
-    public String toStringVerbose() {
+    public List<String> toStringVerbose(final int verboseLevel) {
         if (isEmpty()) {
-            return "No solution!";
+            return List.of("No solution!");
         } else {
-            return getStatistics() + "\n" +
-                   "Solution: " + "\n" +
-                   RobotsStateUtil.toMovementsString(getSolutionPath()) + "\n" +
-                   RobotsStateUtil.toJsonResultString(getSolutionPath()) + "\n" +
-                   RobotsStateUtil.toMovesResultString(getSolutionPath()).replace("{Pos", "\n{Pos") + "\n";
+            if (verboseLevel < 0) {
+                return List.of();
+            }
+
+            final List<String> lines = new ArrayList<>();
+            lines.addAll(Arrays.asList(getStatistics().toString().split("\\n")));
+            lines.add("Solution: ");
+            lines.add("");
+            lines.add(RobotsStateUtil.toStringShortMove(getSolutionPath()));
+            lines.add("");
+            lines.addAll(RobotsStateUtil.toStringHumanReadable(getSolutionPath()));
+            lines.add("");
+            lines.add(RobotsStateUtil.toStringJsonResult(getSolutionPath()));
+            lines.add("");
+            return lines;
         }
     }
 
@@ -52,8 +65,8 @@ public class Solution {
             return "No solution!";
         } else {
             return getStatistics() + "\n" +
-                   "Solution: " + "\n" +
-                   RobotsStateUtil.toMovesResultString(getSolutionPath()).replace("{Pos", "\n{Pos") + "\n";
+                    "Solution: " + "\n" +
+                    Strings.join(RobotsStateUtil.toStringHumanReadable(getSolutionPath()), '\n');
         }
     }
 

@@ -2,10 +2,12 @@ package net.booru.slidingrobots.state;
 
 import com.google.gson.Gson;
 import net.booru.slidingrobots.algorithm.Node;
+import net.booru.slidingrobots.common.Direction;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Represents the current state of robot positions A RobotState is immutable.
@@ -16,7 +18,6 @@ public final class RobotsStateUtil {
      * Nodes are a linked list, this method will extract the path of {@link RobotsState}s
      *
      * @param endNode a node
-     *
      * @return the list of states from start state to the final state in endNode.
      */
     public static LinkedList<RobotsState> extractRobotStatesFromNodePath(final Node endNode) {
@@ -31,58 +32,25 @@ public final class RobotsStateUtil {
      * Convert a list of RobotsState to a more easily readable format.
      * <p>
      * States are expected to be sequential where only one state position tuple (x,y) differs between two consecutive
-     * states, else undefined behavior.
+     * states, else undefined behavior. That is it shows the target position and which piece was moved.
      *
      * @param moves a sequence of moves where for each pair of consecutive states only one robot has moved.
-     *
      * @return a nice string representation of the moves
      */
-    public static String toMovementsString(final List<RobotsState> moves) {
+    public static String toStringShortMove(final List<RobotsState> moves) {
         final StringBuilder sb = new StringBuilder(100);
 
-        sb.append("Moves: ");
+        sb.append("Moves \"piece_index to (to_pos_X, to_pos_Y)\":   ");
 
         for (int i = 1; i < moves.size(); i++) {
             final RobotsState previousState = moves.get(i - 1);
             final RobotsState currentState = moves.get(i);
             final int robotIndex = indexOfFirstDifference(previousState, currentState);
 
-            sb.append('(').append(currentState.getPositionX(robotIndex))
-              .append(',').append(currentState.getPositionY(robotIndex)).append(')')
-              .append(':').append(robotIndex)
-              .append(' ');
-        }
-
-        return sb.toString();
-    }
-
-    /**
-     * Convert a list of RobotsState to a more easily readable format.
-     * <p>
-     * States are expected to be sequential where only one state position tuple (x,y) differs between two consecutive
-     * states, else undefined behavior.
-     *
-     * @param moves a sequence of moves where for each pair of consecutive states only one robot has moved.
-     *
-     * @return a nice string representation of the moves
-     */
-    public static String toMovementsStringVerbose(final List<RobotsState> moves) {
-        final StringBuilder sb = new StringBuilder(100);
-
-        sb.append("Moves: ");
-
-        for (int i = 1; i < moves.size(); i++) {
-            final RobotsState previousState = moves.get(i - 1);
-            final RobotsState currentState = moves.get(i);
-            final int robotIndex = indexOfFirstDifference(previousState, currentState);
-
-            final String robotName = (robotIndex == 0) ? "MainRobot" : "HelperRobot-" + robotIndex;
-            sb.append(robotName)
-              .append(" -> (")
-              .append(currentState.getPositionX(robotIndex))
-              .append(", ")
-              .append(currentState.getPositionY(robotIndex))
-              .append(") ");
+            sb.append(robotIndex).append(" -> ")
+                    .append('(').append(currentState.getPositionX(robotIndex))
+                    .append(',').append(currentState.getPositionY(robotIndex)).append(')')
+                    .append("  |  ");
         }
 
         return sb.toString();
@@ -135,7 +103,13 @@ public final class RobotsStateUtil {
         }
     }
 
-    public static String toJsonResultString(final List<RobotsState> states) {
+    /**
+     * This is the result the backend expects.
+     *
+     * @param states
+     * @return the json string
+     */
+    public static String toStringJsonResult(final List<RobotsState> states) {
         /*
          [ {
              "dir": {"dx": 1,"dy": 0},
@@ -145,29 +119,20 @@ public final class RobotsStateUtil {
           ],
         */
 
-        final List<Move> moves = new ArrayList<>(states.size() - 1);
-        for (int i = 1; i < states.size(); i++) {
-            final RobotsState previousState = states.get(i - 1);
-            final RobotsState currentState = states.get(i);
-            final int robotIndex = indexOfFirstDifference(previousState, currentState);
-
-            final int x = previousState.getPositionX(robotIndex);
-            final int y = previousState.getPositionY(robotIndex);
-            final Pos pos = new Pos(x, y);
-
-            final int newX = currentState.getPositionX(robotIndex);
-            final int newY = currentState.getPositionY(robotIndex);
-            final Dir dir = new Dir((int) Math.signum(newX - x), (int) Math.signum(newY - y));
-
-            final Move move = new Move(dir, pos);
-            moves.add(move);
-        }
+        final List<Move> moves = getMoveList(states);
 
         final String listOfJson = new Gson().toJson(moves);
         return listOfJson;
     }
 
-    public static String toMovesResultString(final List<RobotsState> states) {
+    public static List<String> toStringHumanReadable(final List<RobotsState> states) {
+        final List<Move> moves = getMoveList(states);
+        return moves.stream()
+                .map(move -> "Move piece " + move.robot + "  " + Direction.valueOf(move.dir.dx, move.dir.dy))
+                .collect(Collectors.toUnmodifiableList());
+    }
+
+    private static List<Move> getMoveList(final List<RobotsState> states) {
         final List<Move> moves = new ArrayList<>(states.size() - 1);
 
         for (int i = 1; i < states.size(); i++) {
@@ -186,8 +151,7 @@ public final class RobotsStateUtil {
             final Move move = new Move(dir, pos, robotIndex);
             moves.add(move);
         }
-
-        return moves.toString();
+        return moves;
     }
 
     /**
