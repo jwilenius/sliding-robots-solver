@@ -3,12 +3,16 @@ package net.booru.slidingrobots.state;
 import net.booru.slidingrobots.algorithm.EndCriterion;
 import net.booru.slidingrobots.common.Pair;
 import net.booru.slidingrobots.common.Point;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class Game {
+    private static final Logger cLogger = LoggerFactory.getLogger(Game.class);
+
     private final boolean iIsOneWay;
     private final Board iBoard;
     private final RobotsState iInitialRobotsState;
@@ -45,6 +49,7 @@ public class Game {
                     .replace(",r:", ":main_robot:")
                     .replace(",h:", ":helper_robot:")
                     .replace(",g:", ":goal:");
+            cLogger.info("Expanded map string: {}", mapString);
         } else {
             throw new IllegalArgumentException("map string must start with map:sizeX:sizeY (or m:sizeX:sizeY if compact)");
         }

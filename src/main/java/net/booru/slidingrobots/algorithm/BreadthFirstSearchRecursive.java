@@ -98,9 +98,6 @@ public class BreadthFirstSearchRecursive implements SlidingRobotsSearchAlgorithm
                 solutions.add(currentNode);
 
                 final int updatedSolutionDepth = Math.min(solutionDepth, currentNode.getDepth());
-                if (updatedSolutionDepth < solutionDepth) { // only clear too deep nodes once (ok since BFS)
-                    nodesToExpand.removeIf(node -> node.getDepth() > currentNode.getDepth());
-                }
 
                 return searchBFS(nodesToExpand, seenStates, endCriterion, solutions,
                                  updatedSolutionDepth, isFindAllSolutions, mutableStatistics);
