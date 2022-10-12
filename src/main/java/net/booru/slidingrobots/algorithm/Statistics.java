@@ -1,5 +1,8 @@
 package net.booru.slidingrobots.algorithm;
 
+/**
+ * A mutable statistics object created during search.
+ */
 public class Statistics {
     private int iStatesCreated;
     private int iStatesVisited;
@@ -18,6 +21,22 @@ public class Statistics {
         iSolutionLength = by;
     }
 
+    public int getStatesCreated() {
+        return iStatesCreated;
+    }
+
+    public int getStatesVisited() {
+        return iStatesVisited;
+    }
+
+    public int getSolutionLength() {
+        return iSolutionLength;
+    }
+
+    public double getTime() {
+        return iTime;
+    }
+
     @Override
     public String toString() {
         return String.format("Statistics: \n" +
@@ -25,7 +44,7 @@ public class Statistics {
                              "   Solution length: %d\n" +
                              "   States Created:  %d\n" +
                              "   States Visited:  %d\n",
-                             iTime, iSolutionLength, iStatesCreated, iStatesVisited);
+                iTime, iSolutionLength, iStatesCreated, iStatesVisited);
     }
 
     public void setTime(final double time) {
