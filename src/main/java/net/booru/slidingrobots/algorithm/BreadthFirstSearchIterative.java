@@ -8,74 +8,133 @@ import net.booru.slidingrobots.common.Timer;
 import net.booru.slidingrobots.state.Board;
 import net.booru.slidingrobots.state.RobotsState;
 import net.booru.slidingrobots.state.RobotsStateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * This is a somewhat naive solution that is generalized with {@link Waypoint} abstraction.
+ * A list of {@link Waypoint} must be met in order. The search is (suboptimally) split into searching
+ * breadth first to each goal. This is suboptimal as we need to save "all" partial solutions and use them as
+ * starts nodes in the next step.
+ */
 public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm {
+    private static final Logger cLogger = LoggerFactory.getLogger(BreadthFirstSearchIterative.class);
+
     private final Board iBoard;
+    private final int iDepthsToKeep;
+    private final boolean iIsFindFirstSolution;
 
     /**
      * @param board the static board that we can make moves on
      */
     public BreadthFirstSearchIterative(final Board board) {
         iBoard = board;
+        iDepthsToKeep = 0;
+        iIsFindFirstSolution = true;
     }
 
     /**
-     * @param startState  the initial state of the robots.
-     *
-     * @return The solution path including to the first goal state.
+     * @param board        the static board that we can make moves on
+     * @param depthsToKeep keep looking for solutions until reaching best solution + {@code depthsToKeep}
+     *                     if {@code depthsToKeep} is < 0 then stop at first solution
+     */
+    public BreadthFirstSearchIterative(final Board board, final int depthsToKeep) {
+        iBoard = board;
+        iIsFindFirstSolution = depthsToKeep < 0;
+        iDepthsToKeep = Math.max(0, depthsToKeep);
+    }
+
+    /**
+     * @param startState  the initial state of the robotss.
+     * @param waypoints the definition of the sequential targets we must reach in the game
+     * @return The solution path including the start state, or empty if no solution was found.
      */
     @Override
-    public Solution run(final RobotsState startState) throws NoSolutionException {
+    public Solution run(final RobotsState startState, final List<Waypoint> waypoints) throws NoSolutionException {
         final Timer timer = new Timer();
-
         final Statistics mutableStatistics = new Statistics();
 
-        final Node endNode = searchBFS(startState, mutableStatistics);
-        final LinkedList<RobotsState> solutionPath = RobotsStateUtil.extractRobotStatesFromNodePath(endNode);
-        timer.close();
+        final Waypoint[] waypointMap = new Waypoint[waypoints.size() + 1];
+        for (int i = 1; i <= waypoints.size(); i++) {
+            waypointMap[i] = waypoints.get(i - 1);
+        }
+
+        final Node startNode = new Node(startState, null, 0);
+        final List<Node> solutions = searchBFS(startNode, waypointMap, mutableStatistics);
+        if (solutions.isEmpty()) {
+            throw new NoSolutionException();
+        }
+
+        final List<RobotsState> solutionPath = RobotsStateUtil.extractRobotStatesFromNodePath(solutions.get(0));
+        timer.stop();
 
         mutableStatistics.setSolutionLength(solutionPath.size() - 1); // path includes start state
         mutableStatistics.setTime(timer.getDurationMillis());
+        mutableStatistics.addSolutionsCounts(solutions, Math.max(iDepthsToKeep, 0));
 
-        return new Solution(solutionPath, mutableStatistics);
+        return new Solution(solutionPath, mutableStatistics, this.getClass().getSimpleName());
     }
 
-
-    private Node searchBFS(final RobotsState startState,
-                           final Statistics mutableStatistics)
-            throws NoSolutionException {
-
-        final LinkedList<Node> nodesToExpand = new LinkedList<>();
-        final Set<RobotsState> seenStates = new HashSet<>(100000);
-        final Node startNode = new Node(startState, null);
+    /**
+     * Expand in breath first order from startNode
+     */
+    private List<Node> searchBFS(final Node startNode,
+                                 final Waypoint[] waypointMap,
+                                 final Statistics mutableStatistics) {
+        final Set<RobotsState> seenStates = new HashSet<>(200_000);
+        final List<Node> solutions = new ArrayList<>(100);
+        final Deque<Node> nodesToExpand = new LinkedList<>();
         nodesToExpand.add(startNode);
-        seenStates.add(startNode.getState());
+
+        final int finalWaypoint = waypointMap.length-1;
+
+        int bestSolutionDepth = Integer.MAX_VALUE;
 
         while (!nodesToExpand.isEmpty()) {
-            // Get the next node to visit
             final Node currentNode = nodesToExpand.poll();
-            final RobotsState currentState = currentNode.getState();
             mutableStatistics.increaseStatesVisited(1);
 
-            // Check if end criteria is met
-            if (iBoard.isGoalReached(currentState)) {
-                return currentNode;
-            }
+            final int nextWaypoint = currentNode.state().getWaypointsReached() + 1;
+            final boolean isWaypointReached = waypointMap[nextWaypoint].isSatisfied(currentNode.state());
 
-            // Not done, find neighbors and add them last in the queue
-            final List<RobotsState> neighbors = currentState.getNeighbors(iBoard, seenStates);
-            for (RobotsState neighbor : neighbors) {
-                nodesToExpand.add(new Node(neighbor, currentNode));
-                seenStates.add(neighbor);
+            if (isWaypointReached) {
+                final Node currentNodeAdditionalGoal = currentNode.withUpdatedGoalsReached();
+                if (finalWaypoint != nextWaypoint) {
+                    nodesToExpand.addFirst(currentNodeAdditionalGoal); // expand the updated node next.
+                } else {
+                    bestSolutionDepth = Math.min(bestSolutionDepth, currentNodeAdditionalGoal.depth());
+
+                    final boolean isTooDeep = currentNodeAdditionalGoal.depth() > bestSolutionDepth + iDepthsToKeep;
+                    final boolean isStopSearching = isTooDeep || (iIsFindFirstSolution && !solutions.isEmpty());
+                    if (isStopSearching) {
+                        return solutions;
+                    }
+
+                    solutions.add(currentNodeAdditionalGoal);
+                }
+            } else {
+                final List<RobotsState> neighbors = iBoard.getNeighbors(currentNode.state());
+                for (int i = 0; i < neighbors.size(); i++) {
+                    final RobotsState neighbor = neighbors.get(i);
+                    if (seenStates.contains(neighbor)) {
+                        continue;
+                    }
+
+                    nodesToExpand.add(new Node(neighbor, currentNode, currentNode.depth() + 1));
+                    seenStates.add(neighbor);
+                    mutableStatistics.increaseStatesSeen();
+                }
+                mutableStatistics.increaseStatesCreated(neighbors.size());
             }
-            mutableStatistics.increaseStatesCreated(neighbors.size());
         }
 
-        throw new NoSolutionException();
+        return solutions;
     }
 }

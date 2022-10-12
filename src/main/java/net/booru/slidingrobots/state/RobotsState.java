@@ -1,30 +1,32 @@
 package net.booru.slidingrobots.state;
 
-import net.booru.slidingrobots.common.Direction;
 import net.booru.slidingrobots.common.Pair;
 import net.booru.slidingrobots.common.Point;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represents the current state of robot positions A RobotState is immutable.
  */
 public final class RobotsState {
+    private static final AtomicInteger cCounter = new AtomicInteger(0);
+    private final int iId = cCounter.getAndIncrement();
     private final byte[] iPositions;
+    private final int iWaypointsReached;
 
     /**
-     * @param robotPositions the positions of robots as follows [main_robot_x, main_robot_y, helper_robot_1_x,
-     *                       helper_robot_2_x, ..., helper_robot_n_x, helper_robot_n_x]
+     * @param robotPositions   the positions of robots as follows [main_robot_x, main_robot_y, helper_robot_1_x,
+     *                         helper_robot_2_x, ..., helper_robot_n_x, helper_robot_n_x]
+     * @param waypointsReached the goals that have been reached starting with the first goal at 0. No goal has the value of -1
      */
-    public RobotsState(final byte[] robotPositions) {
+    public RobotsState(final byte[] robotPositions, final int waypointsReached) {
         iPositions = robotPositions;
+        iWaypointsReached = waypointsReached;
     }
-
 
     public static RobotsState valueOf(final List<Pair<Point, Piece>> robots) {
         final Optional<Pair<Point, Piece>> mainRobot =
@@ -34,7 +36,7 @@ public final class RobotsState {
         }
 
         final List<Pair<Point, Piece>> helperRobots =
-                robots.stream().filter(pair -> pair.second == Piece.helper_robot).collect(Collectors.toList());
+                robots.stream().filter(pair -> pair.second == Piece.helper_robot).toList();
 
         if (helperRobots.size() + 1 != robots.size()) {
             throw new IllegalArgumentException("Input contains other pieces than one main robot and helper robots");
@@ -51,7 +53,19 @@ public final class RobotsState {
             robotPositions[index + 1] = (byte) pointPiecePair.first.y;
         }
 
-        return new RobotsState(robotPositions);
+        return new RobotsState(robotPositions, 0);
+    }
+
+    public RobotsState withNextGoal() {
+        return new RobotsState(iPositions, iWaypointsReached + 1);
+    }
+
+    public long getId() {
+        return iId;
+    }
+
+    public int getWaypointsReached() {
+        return iWaypointsReached;
     }
 
     public int getRobotCount() {
@@ -66,7 +80,7 @@ public final class RobotsState {
         final byte[] positions = new byte[iPositions.length];
         System.arraycopy(iPositions, 0, positions, 0, iPositions.length);
         positions[2 * robotIndex] = (byte) x;
-        return new RobotsState(positions);
+        return new RobotsState(positions, iWaypointsReached);
     }
 
     public RobotsState withPositionY(final int robotIndex, final int y) {
@@ -77,7 +91,7 @@ public final class RobotsState {
         final byte[] positions = new byte[iPositions.length];
         System.arraycopy(iPositions, 0, positions, 0, iPositions.length);
         positions[2 * robotIndex + 1] = (byte) y;
-        return new RobotsState(positions);
+        return new RobotsState(positions, iWaypointsReached);
     }
 
     public int getPositionX(final int robotIndex) {
@@ -92,7 +106,6 @@ public final class RobotsState {
      * @param x          position
      * @param y          position
      * @param robotIndex the robot to ignore
-     *
      * @return true if another robot (not robotIndex) is blocking position (x,y) else false
      */
     public boolean isOtherRobotBlocking(final int x, final int y, final int robotIndex) {
@@ -112,7 +125,6 @@ public final class RobotsState {
     /**
      * @param x position
      * @param y position
-     *
      * @return the index [0..robotCount-1] of the robot at position x,y. -1 if no robot is found.
      */
     public int getRobotAtPosition(final int x, final int y) {
@@ -125,34 +137,9 @@ public final class RobotsState {
         return -1;
     }
 
-    /**
-     * Compute neighboring states to {@code this} state and return them as long as they are not the same as {@code this}
-     * state and not present in {@code seenStates}
-     *
-     * @param seenStates the states that we have already seen
-     *
-     * @return the new unseen neighbors of {@code currentState}, may be empty.
-     */
-    public List<RobotsState> getNeighbors(final Board board, final Set<RobotsState> seenStates) {
-        final int robotCount = getRobotCount();
-        final Direction[] directions = Direction.values();
-
-        final List<RobotsState> expandedState = new ArrayList<>(robotCount * directions.length);
-
-        for (int robotIndex = 0; robotIndex < robotCount; robotIndex++) {
-            for (Direction direction : directions) {
-                final RobotsState state = board.makeMove(robotIndex, direction, this);
-                if (!state.equals(this) && !seenStates.contains(state)) {
-                    expandedState.add(state);
-                }
-            }
-        }
-        return expandedState;
-    }
-
     @Override
     public String toString() {
-        return Arrays.toString(iPositions);
+        return "ID=" + iId;
     }
 
     @Override
@@ -164,11 +151,13 @@ public final class RobotsState {
             return false;
         }
         final RobotsState that = (RobotsState) o;
-        return Arrays.equals(iPositions, that.iPositions);
+        return iWaypointsReached == that.iWaypointsReached && Arrays.equals(iPositions, that.iPositions);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(iPositions);
+        int result = Objects.hash(iWaypointsReached);
+        result = 31 * result + Arrays.hashCode(iPositions);
+        return result;
     }
 }
