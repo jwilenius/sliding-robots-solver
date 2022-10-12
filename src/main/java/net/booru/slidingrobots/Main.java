@@ -71,6 +71,13 @@ public class Main {
             final SlidingRobotsSearchAlgorithm searchAlgorithm = chooseAlgorithm(algorithmType, board);
             final Solution solution = searchAlgorithm.run(robotsState);
             System.out.println(solution.toString());
+
+            int i = 0;
+            for (RobotsState s : solution.getSolutionPath()) {
+                System.out.println("Board i=" + (i++));
+                System.out.println(board.printBoard(s));
+            }
+
         } catch (NoSolutionException e) {
             System.out.println("No solution");
         }
