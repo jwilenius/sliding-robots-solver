@@ -1,5 +1,6 @@
 package net.booru.slidingrobots.state;
 
+import net.booru.slidingrobots.algorithm.EndCriterion;
 import net.booru.slidingrobots.common.Pair;
 import net.booru.slidingrobots.common.Point;
 
@@ -81,4 +82,15 @@ public class Game {
     public boolean isOneWay() {
         return iIsOneWay;
     }
+
+    public List<EndCriterion> getEndCriteria() {
+        if (iIsOneWay) {
+            return List.of(node -> iBoard.isGoalReached(node.getState()));
+        } else {
+            return List.of(node -> iBoard.isGoalReached(node.getState()),
+                           node -> iBoard.isStartReached(node.getState()));
+        }
+    }
+
+
 }
