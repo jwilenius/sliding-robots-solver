@@ -1,6 +1,6 @@
 package net.booru.slidingrobots.state;
 
-import net.booru.slidingrobots.algorithm.EndCriterion;
+import net.booru.slidingrobots.algorithm.model.Waypoint;
 import net.booru.slidingrobots.common.Pair;
 import net.booru.slidingrobots.common.Point;
 import org.slf4j.Logger;
@@ -98,7 +98,7 @@ public class Game {
         return iIsOneWay;
     }
 
-    public List<EndCriterion> getEndCriteria() {
+    public List<Waypoint> getEndCriteria() {
         if (iIsOneWay) {
             return List.of(node -> iBoard.isGoalReached(node.getState()));
         } else {
