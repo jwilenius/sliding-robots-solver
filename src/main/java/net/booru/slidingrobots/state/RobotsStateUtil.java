@@ -7,7 +7,6 @@ import net.booru.slidingrobots.common.Direction;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Represents the current state of robot positions A RobotState is immutable.
@@ -20,10 +19,10 @@ public final class RobotsStateUtil {
      * @param endNode a node
      * @return the list of states from start state to the final state in endNode.
      */
-    public static LinkedList<RobotsState> extractRobotStatesFromNodePath(final Node endNode) {
+    public static List<RobotsState> extractRobotStatesFromNodePath(final Node endNode) {
         final LinkedList<RobotsState> path = new LinkedList<>();
-        for (Node node = endNode; node != null; node = node.getPreviousNode()) {
-            path.addFirst(node.getState());
+        for (Node node = endNode; node != null; node = node.previousNode()) {
+            path.addFirst(node.state());
         }
         return path;
     }
@@ -127,9 +126,12 @@ public final class RobotsStateUtil {
 
     public static List<String> toStringHumanReadable(final List<RobotsState> states) {
         final List<Move> moves = getMoveList(states);
-        return moves.stream()
-                .map(move -> "Move piece " + move.robot + "  " + Direction.valueOf(move.dir.dx, move.dir.dy))
-                .collect(Collectors.toUnmodifiableList());
+        int step = 0;
+        List<String> descriptions = new ArrayList<>();
+        for (var move : moves) {
+            descriptions.add(String.format("%2s: move %s %s", step++, move.robot, Direction.valueOf(move.dir.dx, move.dir.dy)));
+        }
+        return descriptions;
     }
 
     private static List<Move> getMoveList(final List<RobotsState> states) {
