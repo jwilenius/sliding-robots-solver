@@ -1,7 +1,7 @@
 package net.booru.slidingrobots.state;
 
 import com.google.gson.Gson;
-import net.booru.slidingrobots.algorithm.Node;
+import net.booru.slidingrobots.algorithm.model.Node;
 import net.booru.slidingrobots.common.Direction;
 
 import java.util.ArrayList;

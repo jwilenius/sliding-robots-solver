@@ -1,4 +1,4 @@
-package net.booru.slidingrobots.algorithm;
+package net.booru.slidingrobots.algorithm.model;
 
 import net.booru.slidingrobots.state.RobotsState;
 import net.booru.slidingrobots.state.RobotsStateUtil;

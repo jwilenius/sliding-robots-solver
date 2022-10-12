@@ -1,5 +1,9 @@
 package net.booru.slidingrobots.algorithm;
 
+import net.booru.slidingrobots.algorithm.model.Node;
+import net.booru.slidingrobots.algorithm.model.Solution;
+import net.booru.slidingrobots.algorithm.model.Statistics;
+import net.booru.slidingrobots.algorithm.model.Waypoint;
 import net.booru.slidingrobots.common.Timer;
 import net.booru.slidingrobots.state.Board;
 import net.booru.slidingrobots.state.RobotsState;

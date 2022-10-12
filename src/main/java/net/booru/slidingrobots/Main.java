@@ -4,7 +4,7 @@ import net.booru.slidingrobots.algorithm.BreadthFirstSearchIterative;
 import net.booru.slidingrobots.algorithm.BreadthFirstSearchRecursive;
 import net.booru.slidingrobots.algorithm.NoSolutionException;
 import net.booru.slidingrobots.algorithm.SlidingRobotsSearchAlgorithm;
-import net.booru.slidingrobots.algorithm.Solution;
+import net.booru.slidingrobots.algorithm.model.Solution;
 import net.booru.slidingrobots.common.ArgumentParser;
 import net.booru.slidingrobots.common.Timer;
 import net.booru.slidingrobots.state.Board;
