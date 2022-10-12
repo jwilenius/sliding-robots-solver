@@ -35,7 +35,6 @@ public class BreadthFirstSearchRecursive {
         }
     }
 
-
     public BreadthFirstSearchRecursive(final Board board) {
         iBoard = board;
     }
@@ -59,16 +58,9 @@ public class BreadthFirstSearchRecursive {
         }
     }
 
-    private LinkedList<RobotsState> extractRobotStatesFromNodePath(final Node endNode) {
-        final LinkedList<RobotsState> path = new LinkedList<>();
-        for (Node node = endNode; node != null; node = node.getPreviousNode()) {
-            path.addFirst(node.getState());
-        }
-        return path;
-    }
-
     private Node searchBFS(final LinkedList<Node> nodesToExpand, final Set<RobotsState> seenState)
             throws NoSolutionException {
+
         if (nodesToExpand.isEmpty()) {
             throw new NoSolutionException();
         }
@@ -106,6 +98,14 @@ public class BreadthFirstSearchRecursive {
         }
         // todo: apply strategy to expanded states before returning... e.g. randomize
         return expandedState;
+    }
+
+    private LinkedList<RobotsState> extractRobotStatesFromNodePath(final Node endNode) {
+        final LinkedList<RobotsState> path = new LinkedList<>();
+        for (Node node = endNode; node != null; node = node.getPreviousNode()) {
+            path.addFirst(node.getState());
+        }
+        return path;
     }
 
     private static class NoSolutionException extends Exception {
