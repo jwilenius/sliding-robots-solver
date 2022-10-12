@@ -69,7 +69,7 @@ public class Main {
 
         try {
             final SlidingRobotsSearchAlgorithm searchAlgorithm = chooseAlgorithm(algorithmType, board);
-            final Solution solution = searchAlgorithm.run(robotsState);
+            final Solution solution = searchAlgorithm.run(robotsState, game.getEndCriteria());
             System.out.println(solution.toString());
 
             int i = 0;
@@ -104,7 +104,7 @@ public class Main {
             try {
                 final Timer t = new Timer();
                 final SlidingRobotsSearchAlgorithm searchAlgorithm = chooseAlgorithm(algorithmType, game.getBoard());
-                final Solution solution = searchAlgorithm.run(game.getRobotsState());
+                final Solution solution = searchAlgorithm.run(game.getRobotsState(), game.getEndCriteria());
                 t.close();
                 time += t.getDurationMillis();
             } catch (NoSolutionException e) {
