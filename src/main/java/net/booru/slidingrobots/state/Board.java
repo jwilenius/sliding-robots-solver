@@ -63,21 +63,45 @@ public final class Board {
     }
 
     /**
+     * Compute neighboring states to {@code this} state and return them as long as they are not the same as {@code this}
+     * state and not present in {@code seenStates}
+     *
+     * @param robotsState the current positions of the robots and other information
+     * @return the new unseen neighbors of {@code currentState}, may be empty.
+     */
+    public List<RobotsState> getNeighbors(final RobotsState robotsState) {
+        final int robotCount = robotsState.getRobotCount();
+        final Direction[] directions = Direction.values();
+
+        final List<RobotsState> expandedState = new ArrayList<>(robotCount * directions.length);
+
+        for (int robotIndex = 0; robotIndex < robotCount; robotIndex++) {
+            for (Direction direction : directions) {
+                final RobotsState nextState = makeMove(robotIndex, direction, robotsState);
+                final boolean isSamePositionAfterMove =
+                        nextState.getPositionX(robotIndex) == robotsState.getPositionX(robotIndex) &&
+                                nextState.getPositionY(robotIndex) == robotsState.getPositionY(robotIndex);
+                if (!isSamePositionAfterMove) {
+                    expandedState.add(nextState);
+                }
+            }
+        }
+        return expandedState;
+    }
+
+    /**
      * @param robotIndex  the robot to move
      * @param direction   a direction resulting in possibly a new {@link RobotsState}, or the same {@link RobotsState}.
      * @param robotsState the current state
-     *
-     * @return the new boardState after robot at {@code robotIndex} was moved in {@code direction}. If a the move result
-     *         in the same state as {@code robotState} then the {@code robotState} object is returned.
+     * @return the new boardState after robot at {@code robotIndex} was moved in {@code direction}. If the move result
+     * in the same state as {@code robotState} then the {@code robotState} object is returned.
      */
     public RobotsState makeMove(final int robotIndex, final Direction direction, final RobotsState robotsState) {
         final int positionBeforeCollision = findPositionBeforeCollision(robotIndex, direction, robotsState);
         switch (direction) {
-            case up:
-            case down:
+            case up, down:
                 return robotsState.withPositionY(robotIndex, positionBeforeCollision);
-            case left:
-            case right:
+            case left, right:
                 return robotsState.withPositionX(robotIndex, positionBeforeCollision);
             default:
                 throw new IllegalStateException("Unknown Case Exception.");
@@ -91,19 +115,18 @@ public final class Board {
      * @param robotIndex  the robot we are checking the collision for
      * @param direction   the direction we are looking for collision
      * @param robotsState the current state of the robots
-     *
      * @return the coordinate value where collision occurs
      */
     private int findPositionBeforeCollision(final int robotIndex, final Direction direction,
                                             final RobotsState robotsState) {
-        int robotPositionX = robotsState.getPositionX(robotIndex);
-        int robotPositionY = robotsState.getPositionY(robotIndex);
+        final int robotPositionX = robotsState.getPositionX(robotIndex);
+        final int robotPositionY = robotsState.getPositionY(robotIndex);
 
         switch (direction) {
             case up:
                 for (int y = robotPositionY - 1; y >= 0; --y) {
                     if (iImmutableBoard[robotPositionX][y].isBlocking() ||
-                        robotsState.isOtherRobotBlocking(robotPositionX, y, robotIndex)) {
+                            robotsState.isOtherRobotBlocking(robotPositionX, y, robotIndex)) {
                         return y + 1;
                     }
                 }
@@ -112,7 +135,7 @@ public final class Board {
             case down:
                 for (int y = robotPositionY + 1; y < iHeight; ++y) {
                     if (iImmutableBoard[robotPositionX][y].isBlocking() ||
-                        robotsState.isOtherRobotBlocking(robotPositionX, y, robotIndex)) {
+                            robotsState.isOtherRobotBlocking(robotPositionX, y, robotIndex)) {
                         return y - 1;
                     }
                 }
@@ -121,7 +144,7 @@ public final class Board {
             case left:
                 for (int x = robotPositionX - 1; x >= 0; --x) {
                     if (iImmutableBoard[x][robotPositionY].isBlocking() ||
-                        robotsState.isOtherRobotBlocking(x, robotPositionY, robotIndex)) {
+                            robotsState.isOtherRobotBlocking(x, robotPositionY, robotIndex)) {
                         return x + 1;
                     }
                 }
@@ -130,7 +153,7 @@ public final class Board {
             case right:
                 for (int x = robotPositionX + 1; x < iWidth; ++x) {
                     if (iImmutableBoard[x][robotPositionY].isBlocking() ||
-                        robotsState.isOtherRobotBlocking(x, robotPositionY, robotIndex)) {
+                            robotsState.isOtherRobotBlocking(x, robotPositionY, robotIndex)) {
                         return x - 1;
                     }
                 }
@@ -143,11 +166,13 @@ public final class Board {
 
     @Override
     public String toString() {
-        return printBoard(new RobotsState(new byte[0]));
+        return printBoard(new RobotsState(new byte[0], 0));
     }
 
     public String printBoard(final RobotsState robotsState) {
+        final String border = "-".repeat(2 * iWidth - 1);
         final StringBuilder sb = new StringBuilder();
+        sb.append("Board for state_id = " + robotsState.getId()).append('\n');
         for (int y = -1; y < iHeight; y++) {
             for (int x = -1; x < iWidth; x++) {
                 // output the coordinates
@@ -191,11 +216,11 @@ public final class Board {
                 }
             } // end row
             if (y == -1) {
-                sb.append("\n   ----------------");
+                sb.append("\n   ").append(border);
             }
             sb.append('\n');
         }
-        sb.append("   ----------------\n");
+        sb.append("   ").append(border).append("\n");
 
         return sb.toString();
     }
