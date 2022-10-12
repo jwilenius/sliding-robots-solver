@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 public class ArgumentParser {
-    private final Logger iLogger = LoggerFactory.getLogger(ArgumentParser.class);
+    private static final Logger iLogger = LoggerFactory.getLogger(ArgumentParser.class);
 
     private final HashMap<String, Argument> iArguments = new HashMap<>();
     private final HashMap<String, List<String>> iConflicts = new HashMap<>();
@@ -42,20 +43,70 @@ public class ArgumentParser {
         return this;
     }
 
-    public ArgumentParser withSpecificArgument(final String name, final List<String> allowedValues, final String help) {
+    /**
+     * @param name          the name of the argument
+     * @param allowedValues the allowed values
+     * @param help          help text
+     * @return the argument parser
+     */
+    public ArgumentParser withSpecificArgument(final String name,
+                                               final List<String> allowedValues,
+                                               final String help) {
+        return withSpecificArgument(name, null, allowedValues, help);
+    }
+
+    /**
+     * @param name          the name of the argument
+     * @param defaultValue  a value of null for no default
+     * @param allowedValues the allowed values
+     * @param help          help text
+     * @return the argument parser
+     */
+    public ArgumentParser withSpecificArgument(final String name,
+                                               final String defaultValue,
+                                               final List<String> allowedValues,
+                                               final String help) {
         if (iArguments.containsKey(name)) {
             throw new IllegalArgumentException("duplicate argument: " + name);
         }
-        addArgument(name, new Argument(name, allowedValues, help, false));
+        final Argument argument = new Argument(name, allowedValues, help, false);
+        if (defaultValue != null) {
+            argument.setValue(defaultValue);
+        }
+        addArgument(name, argument);
         return this;
     }
 
-    public ArgumentParser withGeneralArgument(final String name, final List<String> valueDescription,
+    /**
+     * @param name             the name of the argument
+     * @param valueDescription description
+     * @param help             help text
+     * @return the argument parser
+     */
+    public ArgumentParser withGeneralArgument(final String name,
+                                              final List<String> valueDescription,
+                                              final String help) {
+        return withGeneralArgument(name, null, valueDescription, help);
+    }
+    /**
+     * @param name             the name of the argument
+     * @param defaultValue     a value of null for no default
+     * @param valueDescription description
+     * @param help             help text
+     * @return the argument parser
+     */
+    public ArgumentParser withGeneralArgument(final String name,
+                                              final String defaultValue,
+                                              final List<String> valueDescription,
                                               final String help) {
         if (iArguments.containsKey(name)) {
             throw new IllegalArgumentException("duplicate argument: " + name);
         }
-        addArgument(name, new Argument(name, valueDescription, help, true));
+        final Argument argument = new Argument(name, valueDescription, help, true);
+        if (defaultValue != null) {
+            argument.setValue(defaultValue);
+        }
+        addArgument(name, argument);
         return this;
     }
 
@@ -94,7 +145,7 @@ public class ArgumentParser {
                 } else {
                     if (!currentArgument.getValueDescriptions().contains(token)) {
                         outputHelpAndExit(token,
-                                          "Argument " + currentArgument.getName() + " has incorrect value: " + token);
+                                "Argument " + currentArgument.getName() + " has incorrect value: " + token);
                     }
                     currentArgument.setValue(token);
                 }
@@ -113,8 +164,8 @@ public class ArgumentParser {
         for (String argument : iConflicts.keySet()) {
             if (iArguments.get(argument).hasValue()) {
                 List<String> conflicts = iConflicts.get(argument).stream()
-                                                   .filter(a -> iArguments.get(a).hasValue())
-                                                   .collect(Collectors.toList());
+                        .filter(a -> iArguments.get(a).hasValue())
+                        .collect(Collectors.toList());
                 if (!conflicts.isEmpty()) {
                     outputHelpAndExit(argument, "has conflict with other argument(s): " + conflicts);
                 }
@@ -140,13 +191,19 @@ public class ArgumentParser {
         iLogger.info("--------------------------------------------");
         iLogger.info("Help:");
         final String indent = "    {}";
-        for (var entry : iArguments.values()) {
+        final List<Argument> values = iArguments.values().stream().sorted(Comparator.comparing(Argument::getName)).toList();
+        for (var entry : values) {
             iLogger.info(indent, entry.toString());
         }
-        iLogger.info("Required arguments:");
-        iLogger.info(indent, iRequiredArguments);
-        iLogger.info("Disjoint arguments:");
-        iLogger.info(indent, iConflicts);
+        if (!iRequiredArguments.isEmpty()) {
+            iLogger.info("Required arguments:");
+            iLogger.info(indent, iRequiredArguments);
+        }
+
+        if (!iConflicts.isEmpty()) {
+            iLogger.info("Disjoint arguments:");
+            iLogger.info(indent, iConflicts);
+        }
         iLogger.info("--------------------------------------------");
     }
 
