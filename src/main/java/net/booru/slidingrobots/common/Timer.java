@@ -4,7 +4,7 @@ public class Timer {
     private final long iStart = System.nanoTime();
     private long iDurationNanos;
 
-    public void close() {
+    public void stop() {
         iDurationNanos = System.nanoTime() - iStart;
     }
 
