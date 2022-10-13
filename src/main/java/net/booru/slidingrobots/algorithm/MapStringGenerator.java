@@ -1,6 +1,7 @@
-package net.booru.slidingrobots.state;
+package net.booru.slidingrobots.algorithm;
 
 import net.booru.slidingrobots.common.Point;
+import net.booru.slidingrobots.state.Piece;
 
 import java.util.HashMap;
 import java.util.Random;

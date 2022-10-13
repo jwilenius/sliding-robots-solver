@@ -8,7 +8,7 @@ import net.booru.slidingrobots.common.ArgumentParser;
 import net.booru.slidingrobots.common.Timer;
 import net.booru.slidingrobots.state.Board;
 import net.booru.slidingrobots.state.Game;
-import net.booru.slidingrobots.state.MapStringGenerator;
+import net.booru.slidingrobots.algorithm.MapStringGenerator;
 import net.booru.slidingrobots.state.RobotsState;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
