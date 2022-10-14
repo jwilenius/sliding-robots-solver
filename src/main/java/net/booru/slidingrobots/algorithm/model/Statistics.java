@@ -28,8 +28,8 @@ public class Statistics {
         iStatesSeen++;
     }
 
-    public void setSolutionLength(int by) {
-        iSolutionLength = by;
+    public void setSolutionLength(int length) {
+        iSolutionLength = length;
     }
 
     public int getStatesCreated() {

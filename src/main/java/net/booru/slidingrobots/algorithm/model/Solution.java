@@ -20,7 +20,7 @@ public class Solution {
     }
 
     public Solution(final List<RobotsState> solutionPath, final Statistics statistics, final String algorithmName) {
-        iSolutionPath = solutionPath;
+        iSolutionPath = List.copyOf(solutionPath);
         iStatistics = statistics;
         iAlgorithmName = algorithmName;
     }
@@ -29,6 +29,10 @@ public class Solution {
         return iAlgorithmName;
     }
 
+    /**
+     * @return the solution path from (and including) the start state to the end state.
+     * The length of the solution path is thus 1+ solution length.
+     */
     public List<RobotsState> getSolutionPath() {
         return iSolutionPath;
     }
