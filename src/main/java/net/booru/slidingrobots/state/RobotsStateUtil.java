@@ -44,7 +44,7 @@ public final class RobotsStateUtil {
         for (int i = 1; i < moves.size(); i++) {
             final RobotsState previousState = moves.get(i - 1);
             final RobotsState currentState = moves.get(i);
-            final int robotIndex = indexOfFirstDifference(previousState, currentState);
+            final int robotIndex = getRobotIndexOfFirstDifference(previousState, currentState);
 
             sb.append(robotIndex).append(" -> ")
                     .append('(').append(currentState.getPositionX(robotIndex))
@@ -75,8 +75,8 @@ public final class RobotsStateUtil {
         public final int dy;
 
         public Dir(final int dx, final int dy) {
-            this.dx = dx;
-            this.dy = dy;
+            this.dx = (int) Math.signum(dx);
+            this.dy = (int) Math.signum(dy);
         }
 
         @Override
@@ -140,7 +140,7 @@ public final class RobotsStateUtil {
         for (int i = 1; i < states.size(); i++) {
             final RobotsState previousState = states.get(i - 1);
             final RobotsState currentState = states.get(i);
-            final int robotIndex = indexOfFirstDifference(previousState, currentState);
+            final int robotIndex = getRobotIndexOfFirstDifference(previousState, currentState);
 
             final int x = previousState.getPositionX(robotIndex);
             final int y = previousState.getPositionY(robotIndex);
@@ -148,7 +148,7 @@ public final class RobotsStateUtil {
 
             final int newX = currentState.getPositionX(robotIndex);
             final int newY = currentState.getPositionY(robotIndex);
-            final Dir dir = new Dir((int) Math.signum(newX - x), (int) Math.signum(newY - y));
+            final Dir dir = new Dir(newX - x, newY - y);
 
             final Move move = new Move(dir, pos, robotIndex);
             moves.add(move);
@@ -159,18 +159,32 @@ public final class RobotsStateUtil {
     /**
      * Find the first robot index where the states differ.
      *
-     * @param state1 the first state
-     * @param state2 the second state != state1
+     * @param state the first state
+     * @param nextState the second state != state1
      * @return the first robot index where the states differ.
      */
-    private static int indexOfFirstDifference(final RobotsState state1, final RobotsState state2) {
-        for (int i = 0; i < state2.getRobotCount(); i++) {
-            if (state1.getPositionX(i) != state2.getPositionX(i) ||
-                    state1.getPositionY(i) != state2.getPositionY(i)) {
+    public static int getRobotIndexOfFirstDifference(final RobotsState state, final RobotsState nextState) {
+        for (int i = 0; i < nextState.getRobotCount(); i++) {
+            if (state.getPositionX(i) != nextState.getPositionX(i) ||
+                    state.getPositionY(i) != nextState.getPositionY(i)) {
                 return i;
             }
         }
 
         throw new IllegalArgumentException("The two states do not differ");
     }
+
+
+    public static Direction getRobotMovementDirection(final RobotsState state, final RobotsState nextState) {
+        for (int i = 0; i < nextState.getRobotCount(); i++) {
+            final int xDiff = nextState.getPositionX(i) - state.getPositionX(i);
+            final int yDiff = nextState.getPositionY(i) - state.getPositionY(i);
+            if (xDiff != 0 || yDiff != 0) {
+                return Direction.valueOf(xDiff, yDiff);
+            }
+        }
+
+        throw new IllegalArgumentException("The two states do not differ");
+    }
+
 }
