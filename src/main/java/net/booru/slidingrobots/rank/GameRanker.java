@@ -23,6 +23,16 @@ public class GameRanker {
             throw new IllegalArgumentException("Games and solutions must be same size!");
         }
 
+        final List<GameWithSolution> gameWithSolutions = new ArrayList<>(games.size());
+        for (int i = 0; i < games.size(); i++) {
+            gameWithSolutions.add(new GameWithSolution(games.get(i), solutions.get(i), null));
+        }
+
+        return apply(gameWithSolutions);
+    }
+
+    public List<GameWithSolution> apply(final List<GameWithSolution> gameWithSolutions) {
+
         final var bumpsCounter = new BumpsCounter();
 
         final MultiDimRanking<GameWithSolution> mdRanker = new MultiDimRanking<>(List.of(
@@ -30,11 +40,6 @@ public class GameRanker {
                 new Rank<>("Bumps", gs -> bumpsCounter.apply(gs.solution()), s -> 0),  // count bumps
                 new Rank<>("MovesFinal", gs -> gs.solution().getStatistics().getSolutionLength(), bs -> 0)   // if same then moves
         ));
-
-        final ArrayList<GameWithSolution> gameWithSolutions = new ArrayList<>(games.size());
-        for (int i = 0; i < games.size(); i++) {
-            gameWithSolutions.add(new GameWithSolution(games.get(i), solutions.get(i), null));
-        }
 
         final List<GameWithSolution> gameWithSolutionsRanked = mdRanker.applyRank(gameWithSolutions);
         return gameWithSolutionsRanked.stream()
