@@ -1,6 +1,7 @@
 package net.booru.slidingrobots;
 
 import net.booru.slidingrobots.algorithm.BreadthFirstSearchIterative;
+import net.booru.slidingrobots.algorithm.MapStringGenerator;
 import net.booru.slidingrobots.algorithm.NoSolutionException;
 import net.booru.slidingrobots.algorithm.SlidingRobotsSearchAlgorithm;
 import net.booru.slidingrobots.algorithm.model.Solution;
@@ -19,6 +20,7 @@ public class Main {
 
     public static final String ADDITIONAL_DEPTH = "--solution-depth";
     public static final String ARG_SOLVE = "--solve";
+    public static final String ARG_GENERATE = "--generate";
     public static final String ARG_VERBOSE = "--verbose";
     public static final String ARG_PROFILE = "--profile";
     public static final String ARG_MAPS_FILE = "--maps-file";
@@ -41,6 +43,11 @@ public class Main {
                                                example: %s
                                                example: %s"""
                                 .formatted(exampleMap, exampleMapCompact))
+                .withGeneralArgument(ARG_GENERATE, null, List.of("<count>"),
+                        """                                
+                                Generate random <count> maps per solution-moves required 
+                                               A value of <count> must be greater than 0. %s is required for saving the generated maps."""
+                                .formatted(ARG_MAPS_FILE))
                 .withGeneralArgument(ARG_PROFILE, null, List.of("<runs count>"),
                         """                                
                                 Generate random maps and calculate average time.
@@ -52,13 +59,14 @@ public class Main {
                                                Use this map file when %s is used and calculate statistics.
                                                If <runs count> is greater than 0, then the number of rows from the map file what will be run is limited by that number."""
                                 .formatted(ARG_PROFILE))
-                .addConflicts(ARG_SOLVE, List.of(ARG_PROFILE))
-                .addConflicts(ARG_PROFILE, List.of(ARG_SOLVE));
-
+                .addConflicts(ARG_SOLVE, List.of(ARG_PROFILE, ARG_GENERATE))
+                .addConflicts(ARG_PROFILE, List.of(ARG_SOLVE, ARG_GENERATE))
+                .addConflicts(ARG_GENERATE, List.of(ARG_SOLVE, ARG_PROFILE));
         argumentParser.parseArguments(args);
 
         final var solutionDepth = argumentParser.get(ADDITIONAL_DEPTH);
         final var solve = argumentParser.get(ARG_SOLVE);
+        final var generate = argumentParser.get(ARG_GENERATE);
         final var profile = argumentParser.get(ARG_PROFILE);
         final var mapsFile = argumentParser.get(ARG_MAPS_FILE);
         final var verbose = argumentParser.get(ARG_VERBOSE);
@@ -81,6 +89,15 @@ public class Main {
             final int keep = solutionDepth.get().getValueAsInt(); //NOSONAR
 
             ProfileRunner.profileRun(profileRuns, dumpFile, board -> getSearchAlgorithm(keep, board));
+
+            System.exit(1);
+        }
+
+        if (generate.isPresent()) {
+            final int mapsPerMove = generate.get().getValueAsInt();
+            final String dumpFile = mapsFile.get().getValue(); //NOSONAR
+
+            MapStringGenerator.generateToFile(dumpFile, 8, 8, mapsPerMove, 2, 20);
 
             System.exit(1);
         }
