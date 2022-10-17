@@ -42,10 +42,11 @@ public class Main {
                                                example: %s
                                                example: %s"""
                                 .formatted(exampleMap, exampleMapCompact))
-                .withGeneralArgument(ARG_GENERATE, null, List.of("<count>"),
+                .withGeneralArgument(ARG_GENERATE, null, List.of("<mapsPerMove>|<mapsPerMove,minMoves,maxMoves>"),
                         """                                
-                                Generate random <count> maps per solution-moves required 
-                                               A value of <count> must be greater than 0. %s is required for saving the generated maps."""
+                                Generate random maps, <mapsPerMove> maps per solution-moves required, with a range of [2..20] moves,
+                                               OR <mapsPerMove> with a range [<minMoves>..<maxMoves>] 
+                                               %s is required for saving the generated maps."""
                                 .formatted(ARG_MAPS_FILE))
                 .withGeneralArgument(ARG_PROFILE, null, List.of("<runs count>"),
                         """                                
@@ -63,49 +64,63 @@ public class Main {
                 .addConflicts(ARG_GENERATE, List.of(ARG_SOLVE, ARG_PROFILE));
         argumentParser.parseArguments(args);
 
-        final var solutionDepth = argumentParser.get(ADDITIONAL_DEPTH);
+        // no defaults
         final var solve = argumentParser.get(ARG_SOLVE);
         final var generate = argumentParser.get(ARG_GENERATE);
         final var profile = argumentParser.get(ARG_PROFILE);
-        final var mapsFile = argumentParser.get(ARG_MAPS_FILE);
-        final var verbose = argumentParser.get(ARG_VERBOSE);
+
+        // with defaults
+        final var solutionDepth = argumentParser.get(ADDITIONAL_DEPTH).get().getValueAsInt(); // NOSONAR safe
+        final var mapsFile = argumentParser.get(ARG_MAPS_FILE).get().getValue();              // NOSONAR safe
+        final var verboseLevel = argumentParser.get(ARG_VERBOSE).get().getValueAsInt();       // NOSONAR safe
 
 
-        // solve and profile are mutually exclusive by definition above
-        final int verboseLevel = verbose.get().getValueAsInt(); //NOSONAR
+        // (*) SOLVE
         if (solve.isPresent()) {
-            final int keep = solutionDepth.get().getValueAsInt(); //NOSONAR
             final String mapString = solve.get().getValue();
-
-            singleRun(keep, mapString, verboseLevel); //NOSONAR
-
+            singleRun(solutionDepth, mapString, verboseLevel); //NOSONAR
             System.exit(1);
         }
 
+        // (*) PROFILE
         if (profile.isPresent()) {
             final int profileRuns = profile.get().getValueAsInt();
-            final String dumpFile = mapsFile.get().getValue(); //NOSONAR
-            final int keep = solutionDepth.get().getValueAsInt(); //NOSONAR
-
-            ProfileRunner.profileRun(profileRuns, dumpFile, board -> getSearchAlgorithm(keep, board));
-
+            ProfileRunner.profileRun(profileRuns, mapsFile, board -> getSearchAlgorithm(solutionDepth, board));
             System.exit(1);
         }
 
+        // (*) GENERATE
         if (generate.isPresent()) {
-            final int mapsPerMove = generate.get().getValueAsInt();
-            final String dumpFile = mapsFile.get().getValue(); //NOSONAR
+            final int mapsPerMove;
+            final int mapsMinMoves;
+            final int mapsMaxMoves;
 
-            MapStringGenerator.generateToFile(dumpFile, 8, 8, mapsPerMove, 2, 20);
+            final String argValue = generate.get().getValue();
+            if (argValue.contains(",")) {
+                final String[] settings = argValue.split(",");
+                if (settings.length != 3) {
+                    throw new IllegalArgumentException("expected: mapsPerMove,minMoves,maxMoves or just mapsPerMove");
+                }
+                mapsPerMove = Integer.parseInt(settings[0]);
+                mapsMinMoves = Integer.parseInt(settings[1]);
+                mapsMaxMoves = Integer.parseInt(settings[2]);
+            } else {
+                mapsPerMove = generate.get().getValueAsInt();
+                mapsMinMoves = 2;
+                mapsMaxMoves = 20;
+            }
+
+            MapStringGenerator.generateToFile(mapsFile, 8, 8, mapsPerMove, mapsMinMoves, mapsMaxMoves);
 
             System.exit(1);
         }
 
-        // fallback no args, run example and print help
+
+        // (*) FALLBACK  -  no args, run example and print help
         argumentParser.outputHelp();
         cLogger.info("--------------------------------");
         cLogger.info("Now we will run an example problem:");
-        singleRun(solutionDepth.get().getValueAsInt(), exampleMap, Math.max(0, verboseLevel));
+        singleRun(solutionDepth, exampleMap, Math.max(0, verboseLevel));
 
         System.exit(1);
     }
