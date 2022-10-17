@@ -15,12 +15,14 @@ public class Game {
 
     private final boolean iIsOneWay;
     private final Board iBoard;
+    private final String iMapString;
     private final RobotsState iInitialRobotsState;
 
-    public Game(final boolean isOneWay, final Board board, final RobotsState initialRobotsState) {
+    public Game(final boolean isOneWay, final Board board, final RobotsState initialRobotsState, final String mapString) {
         iIsOneWay = isOneWay;
         iBoard = board;
         iInitialRobotsState = initialRobotsState;
+        iMapString = mapString;
     }
 
     /**
@@ -85,7 +87,7 @@ public class Game {
                 .filter(pointPieceEntry -> !pointPieceEntry.second.isImmovable())
                 .collect(Collectors.toList());
 
-        return new Game(isOneWay, new Board(pieces, width, height), RobotsState.valueOf(robotList));
+        return new Game(isOneWay, new Board(pieces, width, height), RobotsState.valueOf(robotList), mapString);
     }
 
     /**
@@ -133,6 +135,10 @@ public class Game {
 
     public Board getBoard() {
         return iBoard;
+    }
+
+    public String getMapString() {
+        return iMapString;
     }
 
     public RobotsState getInitialRobotsState() {
