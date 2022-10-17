@@ -1,5 +1,7 @@
-package net.booru.slidingrobots.algorithm;
+package net.booru.slidingrobots;
 
+import net.booru.slidingrobots.algorithm.BreadthFirstSearchIterative;
+import net.booru.slidingrobots.algorithm.NoSolutionException;
 import net.booru.slidingrobots.algorithm.model.Solution;
 import net.booru.slidingrobots.common.Point;
 import net.booru.slidingrobots.common.Timer;

@@ -1,6 +1,5 @@
 package net.booru.slidingrobots;
 
-import net.booru.slidingrobots.algorithm.MapStringGenerator;
 import net.booru.slidingrobots.algorithm.NoSolutionException;
 import net.booru.slidingrobots.algorithm.SlidingRobotsSearchAlgorithm;
 import net.booru.slidingrobots.algorithm.model.Solution;
