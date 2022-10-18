@@ -92,7 +92,7 @@ public class Main {
         // (*) PROFILE
         if (profile.isPresent()) {
             final int profileRuns = profile.get().getValueAsInt();
-            ProfileRunner.profileRun(profileRuns, mapsFile, board -> getSearchAlgorithm(solutionDepth, board));
+            ProfileRunner.profileRun(profileRuns, mapsFile, board -> getSearchAlgorithm(solutionDepth, board), dimX, dimY);
             System.exit(1);
         }
 

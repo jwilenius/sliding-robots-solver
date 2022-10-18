@@ -28,9 +28,10 @@ class ProfileRunner {
      * For getting stats on average speed and running profilers, also for generating maps in order of difficulty
      */
     public static void profileRun(final int runCount, final String mapsFile,
-                                  final Function<Board, SlidingRobotsSearchAlgorithm> algorithmFactory)
+                                  final Function<Board, SlidingRobotsSearchAlgorithm> algorithmFactory,
+                                  final int dimX, final int dimY)
             throws IOException {
-        cLogger.info("Running statistics gathering. runs = {}", runCount);
+        cLogger.info("Running statistics gathering (dimx={} dimy={}). runs = {}", dimX, dimY, runCount);
         final DescriptiveStatistics timeStats = new DescriptiveStatistics(runCount);
 
         final boolean isSaveMapStrings = runCount != 0 && mapsFile.isEmpty();
@@ -41,7 +42,7 @@ class ProfileRunner {
 
         if (mapsFile.isEmpty()) {
             for (int i = 0; i < runCount; i++) {
-                mapStrings.add(MapStringGenerator.generate(8, 8));
+                mapStrings.add(MapStringGenerator.generate(dimX, dimY));
             }
         } else {
             // map file has format "<mapString><space><moveCount>\n"
