@@ -17,12 +17,14 @@ import java.util.List;
 public class Main {
     private static final Logger cLogger = LoggerFactory.getLogger(Main.class);
 
-    public static final String ADDITIONAL_DEPTH = "--solution-depth";
+    public static final String ARG_ADDITIONAL_DEPTH = "--solution-depth";
     public static final String ARG_SOLVE = "--solve";
     public static final String ARG_GENERATE = "--generate";
     public static final String ARG_VERBOSE = "--verbose";
     public static final String ARG_PROFILE = "--profile";
     public static final String ARG_MAPS_FILE = "--maps-file";
+    public static final String ARG_DIM_X = "--dimx";
+    public static final String ARG_DIM_Y = "--dimy";
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     public static void main(String[] args) throws IOException {
@@ -34,7 +36,7 @@ public class Main {
                 "m:8:8,b:0:0,b:0:4,b:2:4,b:2:5,b:3:1,h:3:4,h:4:1,b:4:6,r:5:5,b:5:7,b:7:0,g:6:7";
 
         final var argumentParser = new ArgumentParser()
-                .withGeneralArgument(ADDITIONAL_DEPTH, "-1", List.of("<n>"), "Keep solution of additional depth best + n")
+                .withGeneralArgument(ARG_ADDITIONAL_DEPTH, "-1", List.of("<n>"), "Keep solution of additional depth best + n")
                 .withSpecificArgument(ARG_VERBOSE, "-1", List.of("0", "1"), "print board solution verbose")
                 .withGeneralArgument(ARG_SOLVE, null, List.of("<map-string>"),
                         """
@@ -59,6 +61,9 @@ public class Main {
                                                Use this map file when %s is used and calculate statistics.
                                                If <runs count> is greater than 0, then the number of rows from the map file what will be run is limited by that number."""
                                 .formatted(ARG_PROFILE))
+                .withGeneralArgument(ARG_DIM_X, "8", List.of("<n>"), "The board x dimension size. Default 8.")
+                .withGeneralArgument(ARG_DIM_Y, "8", List.of("<n>"), "The board y dimension size. Default 8.")
+
                 .addConflicts(ARG_SOLVE, List.of(ARG_PROFILE, ARG_GENERATE))
                 .addConflicts(ARG_PROFILE, List.of(ARG_SOLVE, ARG_GENERATE))
                 .addConflicts(ARG_GENERATE, List.of(ARG_SOLVE, ARG_PROFILE));
@@ -70,9 +75,11 @@ public class Main {
         final var profile = argumentParser.get(ARG_PROFILE);
 
         // with defaults
-        final var solutionDepth = argumentParser.get(ADDITIONAL_DEPTH).get().getValueAsInt(); // NOSONAR safe
+        final var solutionDepth = argumentParser.get(ARG_ADDITIONAL_DEPTH).get().getValueAsInt(); // NOSONAR safe
         final var mapsFile = argumentParser.get(ARG_MAPS_FILE).get().getValue();              // NOSONAR safe
         final var verboseLevel = argumentParser.get(ARG_VERBOSE).get().getValueAsInt();       // NOSONAR safe
+        final var dimX = argumentParser.get(ARG_DIM_X).get().getValueAsInt();                 // NOSONAR safe
+        final var dimY = argumentParser.get(ARG_DIM_Y).get().getValueAsInt();                 // NOSONAR safe
 
 
         // (*) SOLVE
@@ -110,7 +117,7 @@ public class Main {
                 mapsMaxMoves = 20;
             }
 
-            MapStringGenerator.generateToFile(mapsFile, 8, 8, mapsPerMove, mapsMinMoves, mapsMaxMoves);
+            MapStringGenerator.generateToFile(mapsFile, dimX, dimY, mapsPerMove, mapsMinMoves, mapsMaxMoves);
 
             System.exit(1);
         }
