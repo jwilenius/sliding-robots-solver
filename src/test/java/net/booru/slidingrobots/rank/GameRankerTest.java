@@ -19,7 +19,7 @@ class GameRankerTest {
 
     @Test
     void testRank1() throws NoSolutionException {
-        final Game game1 = Game.valueOf2d("""
+        final Game game1 = Game.valueOf2DMap("""
                 . . . . . . b .
                 . r . . b b . .
                 b . . b . . . .
@@ -32,7 +32,7 @@ class GameRankerTest {
 
         final Solution solution1 = solve(game1);
 
-        final Game game2 = Game.valueOf("m:4:4:oneway,b:1:0,b:1:1,b:2:1,b:0:3,r:0:0,g:2:0");
+        final Game game2 = Game.valueOfMap("m:4:4:oneway,b:1:0,b:1:1,b:2:1,b:0:3,r:0:0,g:2:0");
         final Solution solution2 = solve(game2);
 
         final List<GameWithSolution> ranked = new GameRanker(

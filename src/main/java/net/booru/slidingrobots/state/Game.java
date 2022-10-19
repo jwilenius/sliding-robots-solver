@@ -1,5 +1,6 @@
 package net.booru.slidingrobots.state;
 
+import net.booru.slidingrobots.MapStringGenerator;
 import net.booru.slidingrobots.algorithm.model.Waypoint;
 import net.booru.slidingrobots.common.Pair;
 import net.booru.slidingrobots.common.Point;
@@ -17,12 +18,46 @@ public class Game {
     private final Board iBoard;
     private final String iMapString;
     private final RobotsState iInitialRobotsState;
+    private final String iSeedString;
 
-    public Game(final boolean isOneWay, final Board board, final RobotsState initialRobotsState, final String mapString) {
+    public Game(final boolean isOneWay, final Board board, final RobotsState initialRobotsState, final String mapString, final String seedString) {
         iIsOneWay = isOneWay;
         iBoard = board;
         iInitialRobotsState = initialRobotsState;
         iMapString = mapString;
+        iSeedString = seedString;
+    }
+
+    /**
+     * This is a convenience method for calling {@link #valueOfMap(String)} or {@link #valueOfSeed(String)}.
+     *
+     * @param mapOrSeed a map or seed string
+     * @return the parsed game.
+     */
+    public static Game valueOf(final String mapOrSeed) {
+        if (mapOrSeed.startsWith("seed:")) {
+            return valueOfSeed(mapOrSeed);
+        } else if (mapOrSeed.startsWith("m:") || mapOrSeed.startsWith("map:")) {
+            return valueOfMap(mapOrSeed);
+        }
+
+        throw new IllegalArgumentException("Map or seed string expected.");
+    }
+
+    /**
+     * Use a seed string to generate the board.
+     * <p>
+     * <pre>
+     * Example seed
+     *   seed:8:8:ABCD-EFGH
+     *   seed:8:8:oneway:ABCD-EFGH
+     * </pre>
+     *
+     * @param seedString a string that can be used to generate a map
+     * @return the Board corresponding to {@code value}.
+     */
+    public static Game valueOfSeed(final String seedString) {
+        return valueOfInternal(MapStringGenerator.generateFromSeed(seedString), seedString);
     }
 
     /**
@@ -42,7 +77,7 @@ public class Game {
      * @param mapOrCompactMap a string representation of a {@link Board}.
      * @return the Board corresponding to {@code value}.
      */
-    public static Game valueOf(final String mapOrCompactMap) {
+    public static Game valueOfMap(final String mapOrCompactMap) {
         final String mapString;
         if (mapOrCompactMap.startsWith("map:")) {
             mapString = mapOrCompactMap;
@@ -60,6 +95,22 @@ public class Game {
             throw new IllegalArgumentException("map string must start with map:sizeX:sizeY (or m:sizeX:sizeY if compact)");
         }
 
+        return valueOfInternal(mapString, "seed:0:0:0000-0000");
+    }
+
+    /**
+     * Parse a string description of a board setup.
+     * <p>
+     * <pre>
+     * Example 8x8 board:
+     *  map:helper_robot:1:4:blocker:1:6:blocker:2:0:main_robot:2:1:blocker:2:3:blocker:4:0:helper_robot:5:6:blocker:6:1:"blocker:7:7:goal:3:0
+     * </pre>
+     *
+     * @param mapString  a string representation of a {@link Board}.
+     * @param seedString the seedString used to generate mapString, or empty string if not available.
+     * @return the Board corresponding to {@code value}.
+     */
+    private static Game valueOfInternal(final String mapString, final String seedString) {
         final String[] tokens = mapString.split(":");
         final int width = Integer.parseInt(tokens[1]);
         final int height = Integer.parseInt(tokens[2]);
@@ -87,7 +138,9 @@ public class Game {
                 .filter(pointPieceEntry -> !pointPieceEntry.second.isImmovable())
                 .collect(Collectors.toList());
 
-        return new Game(isOneWay, new Board(pieces, width, height), RobotsState.valueOf(robotList), mapString);
+        final Board board = new Board(pieces, width, height);
+        final RobotsState initialRobotsState = RobotsState.valueOf(robotList);
+        return new Game(isOneWay, board, initialRobotsState, mapString, seedString);
     }
 
     /**
@@ -109,7 +162,7 @@ public class Game {
      * @param rawInput the 2d map
      * @return a new Game
      */
-    public static Game valueOf2d(final String rawInput) {
+    public static Game valueOf2DMap(final String rawInput) {
         final String input = rawInput.replace(" ", "");
         final String[] rows = input.split("\n");
         final int dimX = rows.length;
@@ -130,7 +183,7 @@ public class Game {
         }
 
         final String map = String.join(",", pieces);
-        return valueOf(map);
+        return valueOfMap(map);
     }
 
     public Board getBoard() {
@@ -139,6 +192,10 @@ public class Game {
 
     public String getMapString() {
         return iMapString;
+    }
+
+    public String getSeedString() {
+        return iSeedString;
     }
 
     public RobotsState getInitialRobotsState() {

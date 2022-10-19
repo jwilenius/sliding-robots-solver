@@ -34,16 +34,18 @@ public class Main {
 
         final String exampleMapCompact =
                 "m:8:8,b:0:0,b:0:4,b:2:4,b:2:5,b:3:1,h:3:4,h:4:1,b:4:6,r:5:5,b:5:7,b:7:0,g:6:7";
+        final String exampleSeed = "seed:8:8:1BC2-EF09";
 
         final var argumentParser = new ArgumentParser()
                 .withGeneralArgument(ARG_ADDITIONAL_DEPTH, "-1", List.of("<n>"), "Keep solution of additional depth best + n")
                 .withSpecificArgument(ARG_VERBOSE, "-1", List.of("0", "1"), "print board solution verbose")
-                .withGeneralArgument(ARG_SOLVE, null, List.of("<map-string>"),
+                .withGeneralArgument(ARG_SOLVE, null, List.of("<map-string | seed-string>"),
                         """
                                 Solve the provided map.
                                                example: %s
+                                               example: %s
                                                example: %s"""
-                                .formatted(exampleMap, exampleMapCompact))
+                                .formatted(exampleMap, exampleMapCompact, exampleSeed))
                 .withGeneralArgument(ARG_GENERATE, null, List.of("<mapsPerMove>|<mapsPerMove,minMoves,maxMoves>"),
                         """                                
                                 Generate random maps, <mapsPerMove> maps per solution-moves required, with a range of [2..20] moves,
@@ -84,8 +86,8 @@ public class Main {
 
         // (*) SOLVE
         if (solve.isPresent()) {
-            final String mapString = solve.get().getValue();
-            singleRun(solutionDepth, mapString, verboseLevel); //NOSONAR
+            final String mapStringOrSeed = solve.get().getValue();
+            singleRun(solutionDepth, mapStringOrSeed, verboseLevel); //NOSONAR
             System.exit(1);
         }
 
@@ -117,7 +119,8 @@ public class Main {
                 mapsMaxMoves = 20;
             }
 
-            MapStringGenerator.generateToFile(mapsFile, dimX, dimY, mapsPerMove, mapsMinMoves, mapsMaxMoves);
+            final boolean isOneWay = false; // possibly allow to select this
+            MapStringGenerator.generateToFile(mapsFile, dimX, dimY, mapsPerMove, mapsMinMoves, mapsMaxMoves, isOneWay);
 
             System.exit(1);
         }
@@ -132,16 +135,16 @@ public class Main {
         System.exit(1);
     }
 
-    private static void singleRun(final int solutionDepth, final String mapString, final int verboseLevel) {
+    private static void singleRun(final int solutionDepth, final String mapStringOrSeed, final int verboseLevel) {
         final boolean isVerbose = verboseLevel >= 0;
-        final Game game = Game.valueOf(mapString);
+        final Game game = Game.valueOf(mapStringOrSeed);
         final Board board = game.getBoard();
         final RobotsState robotsState = game.getInitialRobotsState();
 
         if (isVerbose) {
             cLogger.info("");
             cLogger.info("------------------------------------------------");
-            cLogger.info("Map-string: {}", mapString);
+            cLogger.info("Map/seed-string: {}", mapStringOrSeed);
             board.boardToLogLines(robotsState).forEach(cLogger::info);
             cLogger.info("------------------------------------------------");
             cLogger.info("");

@@ -12,7 +12,7 @@ class BumpsCounterTest {
 
     @Test
     void testBumps() throws NoSolutionException {
-        final Game game = Game.valueOf2d("""
+        final Game game = Game.valueOf2DMap("""
                 . . . . . . b .
                 . r . . b b . .
                 b . . b . . . .

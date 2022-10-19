@@ -3,6 +3,7 @@ package net.booru.slidingrobots;
 import net.booru.slidingrobots.algorithm.NoSolutionException;
 import net.booru.slidingrobots.algorithm.SlidingRobotsSearchAlgorithm;
 import net.booru.slidingrobots.algorithm.model.Solution;
+import net.booru.slidingrobots.state.seed.SeedUtils;
 import net.booru.slidingrobots.common.Timer;
 import net.booru.slidingrobots.state.Board;
 import net.booru.slidingrobots.state.Game;
@@ -31,22 +32,32 @@ class ProfileRunner {
                                   final Function<Board, SlidingRobotsSearchAlgorithm> algorithmFactory,
                                   final int dimX, final int dimY)
             throws IOException {
+        final boolean isOneWay = false;
+
         cLogger.info("Running statistics gathering (dimx={} dimy={}). runs = {}", dimX, dimY, runCount);
         final DescriptiveStatistics timeStats = new DescriptiveStatistics(runCount);
 
-        final boolean isSaveMapStrings = runCount != 0 && mapsFile.isEmpty();
 
         final List<String> mapStrings = new ArrayList<>(runCount);
+        final List<String> mapSeedStrings = new ArrayList<>(runCount);
         final List<Integer> mapMoves = new ArrayList<>(runCount);
         int noSolutionCount = 0;
 
-        if (mapsFile.isEmpty()) {
+        final Path mapsFilePath = Path.of(mapsFile);
+        final boolean isSaveMapStrings = !Files.exists(mapsFilePath);
+        if (isSaveMapStrings) {
             for (int i = 0; i < runCount; i++) {
-                mapStrings.add(MapStringGenerator.generate(dimX, dimY));
+                final String seedString = SeedUtils.generateSeedString(dimX, dimY, isOneWay);
+                mapSeedStrings.add(seedString);
+                mapStrings.add(MapStringGenerator.generateFromSeed(seedString));
             }
         } else {
-            // map file has format "<mapString><space><moveCount>\n"
-            Files.readAllLines(Path.of(mapsFile)).forEach(map -> mapStrings.add(map.split(" ")[0]));
+            // map file has format "<seedString><space><mapString><space><moveCount>\n"
+            for (String line : Files.readAllLines(mapsFilePath)) {
+                final String[] lineSplit = line.split(" ");
+                mapSeedStrings.add(lineSplit[0]);
+                mapStrings.add(lineSplit[1]);
+            }
         }
 
         final List<String> mapStringsToDump = new ArrayList<>(runCount);
@@ -56,7 +67,7 @@ class ProfileRunner {
                         : Math.min(runCount, mapStrings.size());
 
         for (int i = 0; i < actualRunCount; i++) {
-            final Game game = Game.valueOf(mapStrings.get(i));
+            final Game game = Game.valueOfMap(mapStrings.get(i));
             try {
                 final Timer timer = new Timer();
                 final SlidingRobotsSearchAlgorithm searchAlgorithm = algorithmFactory.apply(game.getBoard());
@@ -85,7 +96,12 @@ class ProfileRunner {
             // map file has format "<mapString><space><moveCount>\n"
             final List<String> output = new ArrayList<>(mapStrings.size());
             for (int i = 0; i < mapStringsToDump.size(); i++) {
-                output.add(mapStringsToDump.get(i) + " " + mapMoves.get(i));
+                output.add("%s %s %d"
+                        .formatted(
+                                mapSeedStrings.get(i),
+                                mapStringsToDump.get(i),
+                                mapMoves.get(i))
+                );
             }
 
             Files.write(Path.of(dumpFile), output, Charset.defaultCharset());

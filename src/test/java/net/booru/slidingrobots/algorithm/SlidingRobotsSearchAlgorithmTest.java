@@ -79,7 +79,7 @@ class SlidingRobotsSearchAlgorithmTest {
     @Test
     void testSmall() {
         final int movesRequired = 10;
-        final Game game = Game.valueOf("m:4:4,b:1:0,b:1:1,b:2:1,b:0:3,r:0:0,g:2:0");
+        final Game game = Game.valueOfMap("m:4:4,b:1:0,b:1:1,b:2:1,b:0:3,r:0:0,g:2:0");
         System.out.println(game.getBoard().printBoard(game.getInitialRobotsState()));
         assertDoesNotThrow(
                 () -> executeTestForMap(movesRequired, "No seed", game, getAlgorithmFactory()));
@@ -88,7 +88,7 @@ class SlidingRobotsSearchAlgorithmTest {
     @Test
     void testSmallOneWay() {
         final int movesRequired = 4;
-        final Game game = Game.valueOf("m:4:4:oneway,b:1:0,b:1:1,b:2:1,b:0:3,r:0:0,g:2:0");
+        final Game game = Game.valueOfMap("m:4:4:oneway,b:1:0,b:1:1,b:2:1,b:0:3,r:0:0,g:2:0");
         System.out.println(game.getBoard().printBoard(game.getInitialRobotsState()));
         assertDoesNotThrow(
                 () -> executeTestForMap(movesRequired, "No seed", game, getAlgorithmFactory()));
@@ -97,7 +97,7 @@ class SlidingRobotsSearchAlgorithmTest {
     @Test
     void testNoSolution() {
         final int movesRequired = 0;
-        final Game game = Game.valueOf2d("""
+        final Game game = Game.valueOf2DMap("""
                 r . b .
                 . . b .
                 b b h .
@@ -111,7 +111,7 @@ class SlidingRobotsSearchAlgorithmTest {
     @Test
     void testNonGreedyFirstPartSolution() {
         final int movesRequired = 13;
-        final Game game = Game.valueOf("m:8:8,b:1:0,b:4:0,b:5:1,b:3:3,b:3:4,b:3:5,b:6:7,b:7:7,h:3:0,h:5:7,r:6:1,g:0:1");
+        final Game game = Game.valueOfMap("m:8:8,b:1:0,b:4:0,b:5:1,b:3:3,b:3:4,b:3:5,b:6:7,b:7:7,h:3:0,h:5:7,r:6:1,g:0:1");
         assertDoesNotThrow(
                 () -> executeTestForMap(movesRequired, "No seed", game, getAlgorithmFactory()));
         assertDoesNotThrow(
@@ -122,7 +122,7 @@ class SlidingRobotsSearchAlgorithmTest {
     void test7Moves() {
         final int movesRequired = 7;
         final String seed = "seed:8:8:EO8T-0MXD";
-        final Game game = Game.valueOf("map:8:8:helper_robot:3:0:helper_robot:2:1:blocker:6:1:blocker:7:1:blocker:6:2:main_robot:2:3:blocker:7:4:blocker:6:5:blocker:1:6:goal:6:6:blocker:2:7:blocker:3:7");
+        final Game game = Game.valueOfMap("map:8:8:helper_robot:3:0:helper_robot:2:1:blocker:6:1:blocker:7:1:blocker:6:2:main_robot:2:3:blocker:7:4:blocker:6:5:blocker:1:6:goal:6:6:blocker:2:7:blocker:3:7");
 
         assertDoesNotThrow(
                 () -> executeTestForMap(movesRequired, seed, game, getAlgorithmFactory()));
@@ -134,7 +134,7 @@ class SlidingRobotsSearchAlgorithmTest {
     void testLevel5Puzzle5() {
         final int movesRequired = 15;
         final String seed = "seed:8:8:EO8T-0MXD";
-        final Game game = Game.valueOf("m:8:8,b:4:0,b:5:0,b:5:1,b:3:3,b:5:4,b:0:5,b:1:5,b:2:5,h:6:4,h:2:6,r:6:2,g:2:3");
+        final Game game = Game.valueOfMap("m:8:8,b:4:0,b:5:0,b:5:1,b:3:3,b:5:4,b:0:5,b:1:5,b:2:5,h:6:4,h:2:6,r:6:2,g:2:3");
 
         // 4 bump complexity, many intersecting paths
         assertDoesNotThrow(
@@ -149,7 +149,7 @@ class SlidingRobotsSearchAlgorithmTest {
         TestCase testCase = testCases.stream().filter(t -> t.seed.equals(specificSeed)).findFirst().orElseThrow();
 
         final Timer timer = new Timer();
-        final Game game = Game.valueOf(testCase.map);
+        final Game game = Game.valueOfMap(testCase.map);
         assertDoesNotThrow(
                 () -> executeTestForMap(testCase.optimal, testCase.seed, game, getAlgorithmFactory()));
 
@@ -165,7 +165,7 @@ class SlidingRobotsSearchAlgorithmTest {
         TestCase testCase = testCases.stream().filter(t -> t.seed.equals(specificSeed)).findFirst().orElseThrow();
 
         final Timer timer = new Timer();
-        final Game game = Game.valueOf(testCase.map);
+        final Game game = Game.valueOfMap(testCase.map);
         assertDoesNotThrow(
                 () -> executeTestForMap(testCase.optimal, testCase.seed, game, getAlgorithmFactory()));
 
@@ -183,7 +183,7 @@ class SlidingRobotsSearchAlgorithmTest {
         for (final TestCase testCase : testCases) {
             System.out.println("\n##################################################");
             System.out.println("Test #" + testCaseCount++);
-            final Game game = Game.valueOf(testCase.map);
+            final Game game = Game.valueOfMap(testCase.map);
             assertDoesNotThrow(
                     () -> executeTestForMap(testCase.optimal, testCase.seed, game, getAlgorithmFactory()));
         }
