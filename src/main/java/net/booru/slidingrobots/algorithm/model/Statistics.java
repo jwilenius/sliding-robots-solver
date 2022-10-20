@@ -48,6 +48,10 @@ public class Statistics {
         return iSolutionLength;
     }
 
+    public int getSolutionLengthCount(final int additionalMoves) {
+        return iSolutionLengthCounts.getOrDefault(iSolutionLength + additionalMoves, 0);
+    }
+
     public List<SolutionLengthCount> getSolutionLengths() {
         return iSolutionLengthCounts.entrySet().stream().sorted(Map.Entry.comparingByKey())
                 .map(e -> new SolutionLengthCount(e.getKey(), e.getValue())).toList();
@@ -83,14 +87,12 @@ public class Statistics {
      */
     public void addSolutionsCounts(final Collection<Node> startNodes, final int solutionCount) {
         final int best = startNodes.iterator().next().depth();
-        final HashMap<Integer, Integer> countMap = new HashMap<>();
+        iSolutionLengthCounts = new HashMap<>();
         startNodes.stream()
                 .takeWhile(node -> node.depth() <= best + solutionCount)
                 .forEach(node -> {
-                    final int count = countMap.getOrDefault(node.depth(), 0);
-                    countMap.put(node.depth(), count + 1);
+                    final int count = iSolutionLengthCounts.getOrDefault(node.depth(), 0);
+                    iSolutionLengthCounts.put(node.depth(), count + 1);
                 });
-
-        iSolutionLengthCounts = countMap;
     }
 }

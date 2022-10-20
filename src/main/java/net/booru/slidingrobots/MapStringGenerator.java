@@ -71,7 +71,7 @@ public class MapStringGenerator {
             try {
                 final String seedString = SeedUtils.generateSeedString(mapDimX, mapDimY, isOneWay);
                 final Game game = Game.valueOfSeed(seedString);
-                final var searchAlgorithm = new BreadthFirstSearchIterative(game.getBoard(), -1);
+                final var searchAlgorithm = new BreadthFirstSearchIterative(game.getBoard(), 2);
                 final Solution solution = searchAlgorithm.run(game.getInitialRobotsState(), game.getEndCriteria());
 
                 final int solutionMoveCount = solution.getStatistics().getSolutionLength();

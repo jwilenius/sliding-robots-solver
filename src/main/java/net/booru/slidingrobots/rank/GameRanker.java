@@ -36,9 +36,28 @@ public class GameRanker {
         final var bumpsCounter = new BumpsCounter();
 
         final MultiDimRanking<GameWithSolution> mdRanker = new MultiDimRanking<>(List.of(
-                new Rank<>("Moves", gs -> gs.solution().getStatistics().getSolutionLength(), bs -> 2),       // within 2 moves
-                new Rank<>("Bumps", gs -> bumpsCounter.apply(gs.solution()), s -> 0),  // count bumps
-                new Rank<>("MovesFinal", gs -> gs.solution().getStatistics().getSolutionLength(), bs -> 0)   // if same then moves
+                new Rank<>("Moves",
+                        gs -> gs.solution().getStatistics().getSolutionLength(),
+                        v -> {
+                            if (v <= 4) return 0; // epsilon = 0 for few moves
+                            if (v <= 6) return 1; // epsilon = 1 for medium
+                            return 2; // epsilon = 2
+                        }),
+                new Rank<>("Bumps",
+                        gs -> bumpsCounter.apply(gs.solution()),
+                        v -> 1),  // 0 epsilon
+                new Rank<>("Solutions_0", // count number of solutions 1 additional moves
+                        gs -> -gs.solution().getStatistics().getSolutionLengthCount(0),
+                        v -> 0),  // 0 epsilon
+                new Rank<>("Solutions_1", // count number of solutions 1 additional moves
+                        gs -> -gs.solution().getStatistics().getSolutionLengthCount(1),
+                        v -> v * 0.05),  // 10% epsilon
+                new Rank<>("Solutions_2", // count number of solutions 2 additional moves
+                        gs -> -gs.solution().getStatistics().getSolutionLengthCount(1),
+                        v -> v * 0.10), // 15% epsilon
+                new Rank<>("MovesFinal",
+                        gs -> gs.solution().getStatistics().getSolutionLength(),
+                        v -> 0)   // if same then moves
         ));
 
         final List<GameWithSolution> gameWithSolutionsRanked = mdRanker.applyRank(gameWithSolutions);
