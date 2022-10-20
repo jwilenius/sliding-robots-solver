@@ -63,7 +63,8 @@ public final class RobotsStateUtil {
         return sb.toString();
     }
 
-    private static class Pos {
+    // These have short names due to json export format
+    public static class Pos {
         public final int x;
         public final int y;
 
@@ -78,7 +79,8 @@ public final class RobotsStateUtil {
         }
     }
 
-    private static class Dir {
+    // These have short names due to json export format
+    public static class Dir {
         public final int dx;
         public final int dy;
 
@@ -93,7 +95,8 @@ public final class RobotsStateUtil {
         }
     }
 
-    private static class Move {
+    // These have short names due to json export format
+    public static class Move {
         public final Dir dir;
         public final Pos pos;
         @JsonIgnore

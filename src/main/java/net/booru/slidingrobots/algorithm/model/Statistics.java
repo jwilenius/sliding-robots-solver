@@ -1,8 +1,8 @@
 package net.booru.slidingrobots.algorithm.model;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,6 +48,11 @@ public class Statistics {
         return iSolutionLength;
     }
 
+    public List<SolutionLengthCount> getSolutionLengths() {
+        return iSolutionLengthCounts.entrySet().stream().sorted(Map.Entry.comparingByKey())
+                .map(e -> new SolutionLengthCount(e.getKey(), e.getValue())).toList();
+    }
+
     public double getTime() {
         return iTime;
     }
@@ -56,10 +61,7 @@ public class Statistics {
     public String toString() {
         var counts = iSolutionLengthCounts == null
                 ? ""
-                : iSolutionLengthCounts.entrySet().stream()
-                .sorted(Comparator.comparing(Map.Entry::getKey))
-                .map(e -> String.format("(L=%d : #=%d)", e.getKey(), e.getValue()))
-                .toList();
+                : getSolutionLengths();
 
         return String.format("""
                         Statistics:

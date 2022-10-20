@@ -1,16 +1,22 @@
 package net.booru.slidingrobots;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import net.booru.slidingrobots.algorithm.BreadthFirstSearchIterative;
 import net.booru.slidingrobots.algorithm.NoSolutionException;
 import net.booru.slidingrobots.algorithm.model.Solution;
+import net.booru.slidingrobots.algorithm.model.SolutionLengthCount;
 import net.booru.slidingrobots.common.Point;
-import net.booru.slidingrobots.state.seed.Seed;
-import net.booru.slidingrobots.state.seed.SeedUtils;
 import net.booru.slidingrobots.common.Timer;
 import net.booru.slidingrobots.rank.GameRanker;
 import net.booru.slidingrobots.rank.GameWithSolution;
+import net.booru.slidingrobots.rank.multidim.RankResult;
 import net.booru.slidingrobots.state.Game;
 import net.booru.slidingrobots.state.Piece;
+import net.booru.slidingrobots.state.RobotsStateUtil;
+import net.booru.slidingrobots.state.seed.Seed;
+import net.booru.slidingrobots.state.seed.SeedUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +31,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -97,7 +104,7 @@ public class MapStringGenerator {
         while (!remainingMoveSolutions.isEmpty());
 
 
-        final List<String> mapsToDump = getRankedMapStrings(movesMap);
+        final List<String> mapsToDump = getRankedOutput(movesMap);
         if (!mapsFile.isEmpty()) {
             Files.write(Path.of(mapsFile), mapsToDump, Charset.defaultCharset());
         } else {
@@ -112,20 +119,51 @@ public class MapStringGenerator {
         cLogger.info("Total maps not unique =       {}", mutableStats.noSolutionCount);
     }
 
-    private static List<String> getRankedMapStrings(final Map<Integer, List<GameWithSolution>> movesMap) {
+    /**
+     * Record for dumping to json
+     */
+    private record DumpObject(String seedString,
+                              String mapString,
+                              int solutionLength,
+                              List<SolutionLengthCount> solutionLengths,
+                              List<RobotsStateUtil.Move> moveList,
+                              List<RankResult.Description> rankValues) {
+    }
+
+    private static List<String> getRankedOutput(final Map<Integer, List<GameWithSolution>> movesMap) {
         final List<GameWithSolution> mapsToRank = movesMap.values().stream()
                 .flatMap(games -> games.stream().map(game ->
                         new GameWithSolution(game.game(), game.solution(), null)))
                 .toList();
 
         final List<GameWithSolution> rankedMaps = new GameRanker().apply(mapsToRank);
-        var mapsToDump = rankedMaps.stream()
-                .map(g -> g.game().getSeedString() + " " + g.game().getMapString() + " " + g.solution().getStatistics().getSolutionLength())
-                .toList();
-        return mapsToDump;
-    }
+        final ObjectWriter writer = new ObjectMapper().writer();
+        final List<String> jsonStrings = rankedMaps.stream().map(gameWithSolution -> {
+                    try {
+                        final Solution solution = gameWithSolution.solution();
+                        final List<RankResult.Description> rankValues = gameWithSolution.rank().getValuesWithDescription();
+                        final String seedString = gameWithSolution.game().getSeedString();
+                        final String mapString = gameWithSolution.game().getMapString();
 
-    private record MapGameSolution(String map, Game game, Solution solution) {
+                        final var jsonObject =
+                                new DumpObject(
+                                        seedString,
+                                        mapString,
+                                        solution.getStatistics().getSolutionLength(),
+                                        solution.getStatistics().getSolutionLengths(),
+                                        RobotsStateUtil.getMoveList(solution.getSolutionPath()),
+                                        rankValues
+                                );
+
+                        return writer.writeValueAsString(jsonObject);
+                    } catch (JsonProcessingException e) {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .toList();
+
+        return jsonStrings;
     }
 
     public static String generateFromSeed(final String seedString) {

@@ -20,10 +20,10 @@ public class RankResult<T> {
         return iValues.get(level);
     }
 
-    public List<String> getValuesWithDescription() {
-        final List<String> valueDescriptions = new ArrayList<>(iValues.size());
+    public List<Description> getValuesWithDescription() {
+        final List<Description> valueDescriptions = new ArrayList<>(iValues.size());
         for (int i = 0; i < iValues.size(); i++) {
-            valueDescriptions.add(iValueFunctions.get(i).name()+"="+iValues.get(i));
+            valueDescriptions.add(new Description(iValueFunctions.get(i).name(), iValues.get(i)));
         }
         return valueDescriptions;
     }
@@ -37,4 +37,6 @@ public class RankResult<T> {
     public String toString() {
         return "V=%s (R=%s)".formatted(iValues, iValueFunctions.stream().map(Rank::name).toList());
     }
+
+    public record Description(String rankName, double rankValue) {}
 }
