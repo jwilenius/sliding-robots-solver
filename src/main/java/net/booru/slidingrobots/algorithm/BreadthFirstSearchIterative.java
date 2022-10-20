@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -88,7 +89,7 @@ public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm
     private List<Node> searchBFS(final Node startNode,
                                  final Waypoint[] waypointMap,
                                  final Statistics mutableStatistics) {
-        final Set<RobotsState> seenStates = new HashSet<>(200_000);
+        final BitSet seenStates = new BitSet(3_407_872);
         final List<Node> solutions = new ArrayList<>(100);
         final Deque<Node> nodesToExpand = new LinkedList<>();
         nodesToExpand.add(startNode);
@@ -123,12 +124,12 @@ public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm
                 final List<RobotsState> neighbors = iBoard.getNeighbors(currentNode.state());
                 for (int i = 0; i < neighbors.size(); i++) {
                     final RobotsState neighbor = neighbors.get(i);
-                    if (seenStates.contains(neighbor)) {
+                    if (isSeenState(seenStates, neighbor)) {
                         continue;
                     }
 
                     nodesToExpand.add(new Node(neighbor, currentNode, currentNode.depth() + 1));
-                    seenStates.add(neighbor);
+                    addSeenState(seenStates, neighbor);
                     mutableStatistics.increaseStatesSeen();
                 }
                 mutableStatistics.increaseStatesCreated(neighbors.size());
@@ -136,5 +137,13 @@ public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm
         }
 
         return solutions;
+    }
+
+    private static void addSeenState(final BitSet seenStates, final RobotsState state) {
+        seenStates.set(state.getId());
+    }
+
+    private static boolean isSeenState(final BitSet seenStates, final RobotsState state) {
+        return seenStates.get(state.getId());
     }
 }

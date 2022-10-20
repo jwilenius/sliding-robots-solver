@@ -3,6 +3,7 @@ package net.booru.slidingrobots.state;
 import net.booru.slidingrobots.common.Pair;
 import net.booru.slidingrobots.common.Point;
 
+import java.awt.Robot;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -13,8 +14,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Represents the current state of robot positions A RobotState is immutable.
  */
 public final class RobotsState {
-    private static final AtomicInteger cCounter = new AtomicInteger(0);
-    private final int iId = cCounter.getAndIncrement();
+    private static int cCounter = 0;
+
+    // (((((((((3 << 2) << 3 | 7) << 3 | 7)) << 3 | 7) << 3 | 7)) << 3 | 7) << 3 | 7) *32/8/1024/1024 = 12MB
+    private static final int[] STATE_IDS = new int[3_407_872];
+    static {
+        Arrays.fill(STATE_IDS, -1);
+    }
+
+    private final int iId;
     private final byte[] iPositions;
     private final int iWaypointsReached;
 
@@ -26,6 +34,21 @@ public final class RobotsState {
     public RobotsState(final byte[] robotPositions, final int waypointsReached) {
         iPositions = robotPositions;
         iWaypointsReached = waypointsReached;
+
+        int stateId = iWaypointsReached; // 2 bits for goals
+        for (int i = 0; i < iPositions.length; i += 2) {
+            final int robotPositionX = robotPositions[i];
+            final int robotPositionY = robotPositions[i + 1];
+            stateId = stateId << 3 | robotPositionX; // 3 bits for coordinate
+            stateId = stateId << 3 | robotPositionY; // 3 bits for coordinate
+        }
+
+        if (STATE_IDS[stateId] < 0) {
+            iId = ++cCounter;
+            STATE_IDS[stateId] = iId;
+        } else {
+            iId = STATE_IDS[stateId];
+        }
     }
 
     public static RobotsState valueOf(final List<Pair<Point, Piece>> robots) {
@@ -60,7 +83,7 @@ public final class RobotsState {
         return new RobotsState(iPositions, iWaypointsReached + 1);
     }
 
-    public long getId() {
+    public int getId() {
         return iId;
     }
 
@@ -151,13 +174,12 @@ public final class RobotsState {
             return false;
         }
         final RobotsState that = (RobotsState) o;
-        return iWaypointsReached == that.iWaypointsReached && Arrays.equals(iPositions, that.iPositions);
+        //return iWaypointsReached == that.iWaypointsReached && Arrays.equals(iPositions, that.iPositions);
+        return iId == that.iId; // since unique per state
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(iWaypointsReached);
-        result = 31 * result + Arrays.hashCode(iPositions);
-        return result;
+        return iId; // since unique per state
     }
 }
