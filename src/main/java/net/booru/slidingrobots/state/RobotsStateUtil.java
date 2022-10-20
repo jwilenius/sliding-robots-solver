@@ -1,8 +1,12 @@
 package net.booru.slidingrobots.state;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.booru.slidingrobots.algorithm.model.Node;
 import net.booru.slidingrobots.common.Direction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -12,6 +16,10 @@ import java.util.List;
  * Represents the current state of robot positions A RobotState is immutable.
  */
 public final class RobotsStateUtil {
+    private static final Logger cLogger = LoggerFactory.getLogger(RobotsStateUtil.class);
+
+    private RobotsStateUtil() {
+    }
 
     /**
      * Nodes are a linked list, this method will extract the path of {@link RobotsState}s
@@ -88,7 +96,8 @@ public final class RobotsStateUtil {
     private static class Move {
         public final Dir dir;
         public final Pos pos;
-        public transient int robot; // exclude from gson JSON
+        @JsonIgnore
+        public final int robot;
 
         public Move(final Dir dir, final Pos pos, final int robot) {
             this.dir = dir;
@@ -120,7 +129,13 @@ public final class RobotsStateUtil {
 
         final List<Move> moves = getMoveList(states);
 
-        final String listOfJson = new Gson().toJson(moves);
+        final String listOfJson;
+        try {
+            listOfJson = new ObjectMapper().writeValueAsString(moves);
+        } catch (JsonProcessingException e) {
+            cLogger.error("Unexpected fail to export to json");
+            return "";
+        }
         return listOfJson;
     }
 
@@ -134,7 +149,7 @@ public final class RobotsStateUtil {
         return descriptions;
     }
 
-    private static List<Move> getMoveList(final List<RobotsState> states) {
+    public static List<Move> getMoveList(final List<RobotsState> states) {
         final List<Move> moves = new ArrayList<>(states.size() - 1);
 
         for (int i = 1; i < states.size(); i++) {
@@ -159,7 +174,7 @@ public final class RobotsStateUtil {
     /**
      * Find the first robot index where the states differ.
      *
-     * @param state the first state
+     * @param state     the first state
      * @param nextState the second state != state1
      * @return the first robot index where the states differ.
      */

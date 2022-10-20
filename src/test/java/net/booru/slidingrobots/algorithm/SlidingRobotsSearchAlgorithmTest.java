@@ -1,7 +1,7 @@
 package net.booru.slidingrobots.algorithm;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.booru.slidingrobots.algorithm.model.Solution;
 import net.booru.slidingrobots.common.Timer;
 import net.booru.slidingrobots.state.Board;
@@ -10,7 +10,6 @@ import net.booru.slidingrobots.state.RobotsStateUtil;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,17 +26,14 @@ class SlidingRobotsSearchAlgorithmTest {
         final URL resource = getClass().getClassLoader().getResource("tests100.json");
         final String jsonString = Files.readString(Path.of(resource.getPath()));
 
-        final Type type = new TypeToken<List<TestCase>>() {
-        }.getType();
-        final List<TestCase> testCases = new Gson().fromJson(jsonString, type);
+
+        final List<TestCase> testCases = new ObjectMapper().readValue(jsonString, new TypeReference<>() {
+        });
 
         return testCases;
     }
 
-    static class TestCase {
-        String map;
-        int optimal;
-        String seed;
+    record TestCase(String map, int optimal, String seed) {
     }
 
     private static void executeTestForMap(final int movesRequired, final String seed, final Game game, final Function<Board, SlidingRobotsSearchAlgorithm> algorithmFactory) throws NoSolutionException {
