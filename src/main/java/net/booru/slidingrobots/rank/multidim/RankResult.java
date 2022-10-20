@@ -20,6 +20,14 @@ public class RankResult<T> {
         return iValues.get(level);
     }
 
+    public List<String> getValuesWithDescription() {
+        final List<String> valueDescriptions = new ArrayList<>(iValues.size());
+        for (int i = 0; i < iValues.size(); i++) {
+            valueDescriptions.add(iValueFunctions.get(i).name()+"="+iValues.get(i));
+        }
+        return valueDescriptions;
+    }
+
     public void addValue(final double value, final Rank<T> valueFunction) {
         iValues.add(value);
         iValueFunctions.add(valueFunction);
