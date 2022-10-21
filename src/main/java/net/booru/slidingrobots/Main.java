@@ -17,9 +17,12 @@ import java.util.List;
 public class Main {
     private static final Logger cLogger = LoggerFactory.getLogger(Main.class);
 
+    public static final String SEPARATOR_LINE = "------------------------------------------------";
+
     public static final String ARG_ADDITIONAL_DEPTH = "--solution-depth";
     public static final String ARG_SOLVE = "--solve";
     public static final String ARG_GENERATE = "--generate";
+    public static final String ARG_SEED = "--seed";
     public static final String ARG_VERBOSE = "--verbose";
     public static final String ARG_PROFILE = "--profile";
     public static final String ARG_MAPS_FILE = "--maps-file";
@@ -37,6 +40,7 @@ public class Main {
         final String exampleSeed = "seed:8:8:1BC2-EF09";
 
         final var argumentParser = new ArgumentParser()
+                .withGeneralArgument(ARG_SEED, null, List.of("<seed>"), "Create a map string from a map seed, e.g. seed:8:8:ABCD-1234")
                 .withGeneralArgument(ARG_ADDITIONAL_DEPTH, "-1", List.of("<n>"), "Keep solution of additional depth best + n")
                 .withSpecificArgument(ARG_VERBOSE, "-1", List.of("0", "1"), "print board solution verbose")
                 .withGeneralArgument(ARG_SOLVE, null, List.of("<map-string | seed-string>"),
@@ -66,15 +70,17 @@ public class Main {
                 .withGeneralArgument(ARG_DIM_X, "8", List.of("<n>"), "The board x dimension size. Default 8.")
                 .withGeneralArgument(ARG_DIM_Y, "8", List.of("<n>"), "The board y dimension size. Default 8.")
 
-                .addConflicts(ARG_SOLVE, List.of(ARG_PROFILE, ARG_GENERATE))
-                .addConflicts(ARG_PROFILE, List.of(ARG_SOLVE, ARG_GENERATE))
-                .addConflicts(ARG_GENERATE, List.of(ARG_SOLVE, ARG_PROFILE));
+                .addConflicts(ARG_SOLVE, List.of(ARG_PROFILE, ARG_GENERATE, ARG_SEED))
+                .addConflicts(ARG_PROFILE, List.of(ARG_SOLVE, ARG_GENERATE, ARG_SEED))
+                .addConflicts(ARG_GENERATE, List.of(ARG_SOLVE, ARG_PROFILE, ARG_SEED))
+                .addConflicts(ARG_SEED, List.of(ARG_SOLVE, ARG_PROFILE, ARG_GENERATE));
         argumentParser.parseArguments(args);
 
         // no defaults
         final var solve = argumentParser.get(ARG_SOLVE);
         final var generate = argumentParser.get(ARG_GENERATE);
         final var profile = argumentParser.get(ARG_PROFILE);
+        final var mapFromSeed = argumentParser.get(ARG_SEED);
 
         // with defaults
         final var solutionDepth = argumentParser.get(ARG_ADDITIONAL_DEPTH).get().getValueAsInt(); // NOSONAR safe
@@ -125,6 +131,22 @@ public class Main {
             System.exit(1);
         }
 
+        if (mapFromSeed.isPresent()) {
+            final String mapString = MapStringGenerator.generateFromSeed(mapFromSeed.get().getValue());
+            final Game game = Game.valueOf(mapString);
+            final Board board = game.getBoard();
+            final RobotsState robotsState = game.getInitialRobotsState();
+
+            cLogger.info("");
+            cLogger.info(SEPARATOR_LINE);
+            board.boardToLogLines(robotsState).forEach(cLogger::info);
+            cLogger.info("");
+            cLogger.info("Map-string: {}", mapString);
+            cLogger.info("");
+            cLogger.info(SEPARATOR_LINE);
+            cLogger.info("");
+            System.exit(1);
+        }
 
         // (*) FALLBACK  -  no args, run example and print help
         argumentParser.outputHelp();
@@ -143,10 +165,10 @@ public class Main {
 
         if (isVerbose) {
             cLogger.info("");
-            cLogger.info("------------------------------------------------");
+            cLogger.info(SEPARATOR_LINE);
             cLogger.info("Map/seed-string: {}", mapStringOrSeed);
             board.boardToLogLines(robotsState).forEach(cLogger::info);
-            cLogger.info("------------------------------------------------");
+            cLogger.info(SEPARATOR_LINE);
             cLogger.info("");
         }
 
