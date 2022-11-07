@@ -22,6 +22,7 @@ public class Main {
     public static final String ARG_ADDITIONAL_DEPTH = "--solution-depth";
     public static final String ARG_SOLVE = "--solve";
     public static final String ARG_GENERATE = "--generate";
+    public static final String ARG_CONVERT = "--convert";
     public static final String ARG_SEED = "--seed";
     public static final String ARG_VERBOSE = "--verbose";
     public static final String ARG_PROFILE = "--profile";
@@ -56,6 +57,12 @@ public class Main {
                                                OR <mapsPerMove> with a range [<minMoves>..<maxMoves>] 
                                                %s is required for saving the generated maps."""
                                 .formatted(ARG_MAPS_FILE))
+                .withGeneralArgument(ARG_CONVERT, null, List.of("<output_filename.json>"),
+                        """     
+                                Convert a generated maps file to a file that is compatible with world/track format of the backend.
+                                This format contains also the definition of "stars".                          
+                                The input maps file is defined by the %s argument."""
+                                .formatted(ARG_MAPS_FILE))
                 .withGeneralArgument(ARG_PROFILE, null, List.of("<runs count>"),
                         """                                
                                 Generate random maps and calculate average time.
@@ -70,15 +77,17 @@ public class Main {
                 .withGeneralArgument(ARG_DIM_X, "8", List.of("<n>"), "The board x dimension size. Default 8.")
                 .withGeneralArgument(ARG_DIM_Y, "8", List.of("<n>"), "The board y dimension size. Default 8.")
 
-                .addConflicts(ARG_SOLVE, List.of(ARG_PROFILE, ARG_GENERATE, ARG_SEED))
-                .addConflicts(ARG_PROFILE, List.of(ARG_SOLVE, ARG_GENERATE, ARG_SEED))
-                .addConflicts(ARG_GENERATE, List.of(ARG_SOLVE, ARG_PROFILE, ARG_SEED))
-                .addConflicts(ARG_SEED, List.of(ARG_SOLVE, ARG_PROFILE, ARG_GENERATE));
+                .addConflicts(ARG_SOLVE, List.of(ARG_PROFILE, ARG_GENERATE, ARG_SEED, ARG_CONVERT))
+                .addConflicts(ARG_PROFILE, List.of(ARG_SOLVE, ARG_GENERATE, ARG_SEED, ARG_CONVERT))
+                .addConflicts(ARG_GENERATE, List.of(ARG_SOLVE, ARG_PROFILE, ARG_SEED, ARG_CONVERT))
+                .addConflicts(ARG_SEED, List.of(ARG_SOLVE, ARG_PROFILE, ARG_GENERATE, ARG_CONVERT))
+                .addConflicts(ARG_CONVERT, List.of(ARG_SOLVE, ARG_PROFILE, ARG_SEED, ARG_GENERATE));
         argumentParser.parseArguments(args);
 
         // no defaults
         final var solve = argumentParser.get(ARG_SOLVE);
         final var generate = argumentParser.get(ARG_GENERATE);
+        final var convert = argumentParser.get(ARG_CONVERT);
         final var profile = argumentParser.get(ARG_PROFILE);
         final var mapFromSeed = argumentParser.get(ARG_SEED);
 
@@ -131,6 +140,7 @@ public class Main {
             System.exit(1);
         }
 
+        // (*) GENERATE Map from Seed
         if (mapFromSeed.isPresent()) {
             final String mapString = MapStringGenerator.generateFromSeed(mapFromSeed.get().getValue());
             final Game game = Game.valueOf(mapString);
@@ -146,6 +156,11 @@ public class Main {
             cLogger.info(SEPARATOR_LINE);
             cLogger.info("");
             System.exit(1);
+        }
+
+        // (*) CONVERT
+        if (convert.isPresent()) {
+            new Converter().applyTo(mapsFile, convert.get().getValue());
         }
 
         // (*) FALLBACK  -  no args, run example and print help
