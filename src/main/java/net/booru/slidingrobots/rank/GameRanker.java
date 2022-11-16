@@ -40,12 +40,12 @@ public class GameRanker {
                         gs -> gs.solution().getStatistics().getSolutionLength(),
                         v -> {
                             if (v <= 4) return 0; // epsilon = 0 for few moves
-                            if (v <= 6) return 1; // epsilon = 1 for medium
+                            if (v <= 8) return 1; // epsilon = 1 for medium
                             return 2; // epsilon = 2
                         }),
                 new Rank<>("Bumps",
                         gs -> bumpsCounter.apply(gs.solution()),
-                        v -> 1),  // 0 epsilon
+                        v -> 1),  // 1 epsilon
                 new Rank<>("Solutions_0", // count number of solutions 1 additional moves
                         gs -> -gs.solution().getStatistics().getSolutionLengthCount(0),
                         v -> 0),  // 0 epsilon
