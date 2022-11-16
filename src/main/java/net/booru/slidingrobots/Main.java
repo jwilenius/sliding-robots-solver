@@ -54,14 +54,15 @@ public class Main {
                 .withGeneralArgument(ARG_GENERATE, null, List.of("<mapsPerMove>|<mapsPerMove,minMoves,maxMoves>"),
                         """                                
                                 Generate random maps, <mapsPerMove> maps per solution-moves required, with a range of [2..20] moves,
-                                               OR <mapsPerMove> with a range [<minMoves>..<maxMoves>] 
+                                               OR <mapsPerMove> with a range [<minMoves>..<maxMoves>]
                                                %s is required for saving the generated maps."""
                                 .formatted(ARG_MAPS_FILE))
                 .withGeneralArgument(ARG_CONVERT, null, List.of("<output_filename.json>"),
                         """     
                                 Convert a generated maps file to a file that is compatible with world/track format of the backend.
-                                This format contains also the definition of "stars".                          
-                                The input maps file is defined by the %s argument."""
+                                               This format contains also the definition of "stars".
+                                               The new converted file name is the argument value of this argument.                      
+                                               The input maps file is defined by the %s argument."""
                                 .formatted(ARG_MAPS_FILE))
                 .withGeneralArgument(ARG_PROFILE, null, List.of("<runs count>"),
                         """                                
@@ -161,6 +162,7 @@ public class Main {
         // (*) CONVERT
         if (convert.isPresent()) {
             new Converter().applyTo(mapsFile, convert.get().getValue());
+            System.exit(1);
         }
 
         // (*) FALLBACK  -  no args, run example and print help
