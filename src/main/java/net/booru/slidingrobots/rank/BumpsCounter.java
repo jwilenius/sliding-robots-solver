@@ -2,7 +2,6 @@ package net.booru.slidingrobots.rank;
 
 import net.booru.slidingrobots.algorithm.model.Solution;
 import net.booru.slidingrobots.common.Direction;
-import net.booru.slidingrobots.state.Board;
 import net.booru.slidingrobots.state.RobotsState;
 import net.booru.slidingrobots.state.RobotsStateUtil;
 
