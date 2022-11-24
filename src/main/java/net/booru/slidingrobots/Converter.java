@@ -3,128 +3,112 @@ package net.booru.slidingrobots;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Converts a maps file into world files that are compatible with the backend.
+ */
 public class Converter {
+    private static final Logger cLogger = LoggerFactory.getLogger(Converter.class);
 
-    private ObjectMapper iMapper = new ObjectMapper();
+    private final ObjectMapper iMapper = new ObjectMapper();
 
     /**
-     * @param inputFile
-     * @param outputFile
-     * @throws IOException
+     * @param inputFile          the maps file to convert
+     * @param outputFileBaseName the base name of the target files that will be generated
      */
-    public void applyTo(final String inputFile, final String outputFile) throws IOException {
-        if (!outputFile.endsWith(".json")) {
+    public void applyTo(final String inputFile, final String outputFileBaseName) throws IOException {
+        if (!outputFileBaseName.endsWith(".json")) {
             throw new IllegalArgumentException("output file should be json");
         }
 
         final Path inputPath = Path.of(inputFile);
-        final Path outputPath = Path.of(outputFile);
-        final Path outputPathData = Path.of(outputFile.replace(".json", "_data.json"));
 
         if (inputFile.isEmpty() || !Files.exists(inputPath)) {
             throw new IllegalArgumentException("Need to provide an input maps file.");
         }
 
-        final List<Map> maps = Files.readAllLines(inputPath).stream()
-                .flatMap(line -> Stream.ofNullable(parseJson(line, Map.class)))
+        final List<Puzzle> puzzles = Files.readAllLines(inputPath).stream()
+                .flatMap(line -> Stream.ofNullable(parseJson(line, Puzzle.class)))
                 .toList();
 
-        convertToBackendFormat(outputPath, maps);
-        convertToDataFormat(outputPathData, maps);
+        convertToBackendFormat(Path.of(outputFileBaseName.replace(".json", "_all.json")), puzzles, puzzles.size() / 2);
+        convertToBackendFormatOneWorldPerSize(outputFileBaseName, puzzles);
     }
 
-    private void convertToBackendFormat(final Path outputPath, final List<Map> maps) throws IOException {
-        final List<MapWithStars> convertedMaps = maps.stream()
-                .map(m -> MapWithStars.of(m.seedString, m.solutionLength))
+    private void convertToBackendFormatOneWorldPerSize(final String outputFileBaseName, final List<Puzzle> puzzles) {
+        final Map<Integer, List<Puzzle>> perSizeMap = puzzles.stream().collect(Collectors.groupingBy(Puzzle::solutionLength));
+        final List<Integer> keysInOrder = perSizeMap.keySet().stream().sorted().toList();
+        for (int key : keysInOrder) {
+            final Path outputPath = Path.of(outputFileBaseName.replace(".json", "_world_" + key + ".json"));
+            convertToBackendFormat(outputPath, perSizeMap.get(key), 30);
+        }
+    }
+
+    private void convertToBackendFormat(final Path outputPath, final List<Puzzle> puzzles, int minStars) {
+        final List<PuzzleWithStars> convertedMaps = puzzles.stream()
+                .map(m -> PuzzleWithStars.of(m.seedString, m.solutionLength))
                 .toList();
 
-        final WorldSpec worldSpec = new WorldSpec(convertedMaps.size() / 2, "1000 years of pain", convertedMaps);
+        final WorldSpec worldSpec = new WorldSpec(minStars, "1000 years of pain", convertedMaps);
         writeJsonFile(outputPath, worldSpec);
     }
 
-    private void convertToDataFormat(final Path outputPath, final List<Map> maps) throws IOException {
-        final List<Data> data = maps.stream().map(
-                map -> new Data(
-                        map.seedString,
-                        map.solutionLength,
-                        getSolutionsCount(0, map),
-                        getSolutionsCount(1, map),
-                        getSolutionsCount(2, map),
-                        map.rankValues.get(1).rankValue
-                )
-        ).toList();
+    //-------------------------------------------------------------------------------------------------------------------------------------
 
-        writeJsonFile(outputPath, data);
-    }
-
-    int getSolutionsCount(int index, Map map) {
-        if (index >= map.solutionLengths.size()) {
-            return 0;
-        }
-        return map.solutionLengths.get(index).solutionCount;
-    }
-
-    private void writeJsonFile(final Path outputPath, final Object data) throws IOException {
-        final String json = iMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data);
+    private void writeJsonFile(final Path outputPath, final Object data) {
         try (final var bufferedWriter = Files.newBufferedWriter(outputPath)) {
+            final String json = iMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data);
             bufferedWriter.write(json);
             bufferedWriter.newLine();
             bufferedWriter.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+
+        cLogger.info("Data written to file: {}", outputPath);
     }
 
-    private Map parseJson(final String line, final Class<Map> myMapClass) {
+    private <T> T parseJson(final String line, final Class<T> myMapClass) {
         try {
             return iMapper.readValue(line, myMapClass);
         } catch (JsonProcessingException e) {
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
+    //-------------------------------------------------------------------------------------------------------------------------------------
+
     // INPUT
-    // partial input format
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Map(
+    record Puzzle(
             String seedString,
             int solutionLength,
             List<SolutionLength> solutionLengths,
             List<RankValue> rankValues
-    ) {
-    }
+    ) {}
 
-    // INPUT
-    record SolutionLength(
-            int solutionMoves,
-            int solutionCount
-    ) {
-    }
+    record SolutionLength(int solutionMoves, int solutionCount) {}
 
-    // INPUT
-    record RankValue(
-            String rankName,
-            int rankValue
-    ) {
-    }
+    record RankValue(String rankName, int rankValue) {}
 
-
-    // WORLD SPEC OUTPUT
-    // output format
+    // OUTPUT
     record WorldSpec(
             int min_stars,
             String world_name,
-            List<MapWithStars> puzzles
-    ) {
-    }
+            List<PuzzleWithStars> puzzles
+    ) {}
 
-    // WORLD SPEC OUTPUT
-    record MapWithStars(
+    record PuzzleWithStars(
             String seed_string,
             int max_moves,
             int[] star_moves
@@ -140,29 +124,17 @@ public class Converter {
          * @param seedString
          * @param optimal
          */
-        public static MapWithStars of(String seedString, int optimal) {
+        public static PuzzleWithStars of(String seedString, int optimal) {
             final int threeStars = optimal;
             final int twoStars = max(optimal + optimal / 2, threeStars + 1, 5);
             final int oneStar = max(optimal + (4 * optimal) / 5, twoStars + 1, 8);
             final int maxMoves = max(optimal + optimal, oneStar + 1, 10);
 
-            return new MapWithStars(seedString, maxMoves, new int[]{threeStars, twoStars, oneStar});
+            return new PuzzleWithStars(seedString, maxMoves, new int[]{threeStars, twoStars, oneStar});
         }
 
         private static int max(int a, int b, int c) {
             return Math.max(a, Math.max(b, c));
         }
-    }
-
-
-    // DATA OUTPUT
-    record Data(
-            String seedString,
-            int solutionLength,
-            int solutuonCount0,
-            int solutuonCount1,
-            int solutuonCount2,
-            int bumps
-    ) {
     }
 }
