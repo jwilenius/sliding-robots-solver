@@ -3,10 +3,10 @@ package net.booru.slidingrobots;
 import net.booru.slidingrobots.algorithm.NoSolutionException;
 import net.booru.slidingrobots.algorithm.SlidingRobotsSearchAlgorithm;
 import net.booru.slidingrobots.algorithm.model.Solution;
-import net.booru.slidingrobots.state.seed.SeedUtils;
 import net.booru.slidingrobots.common.Timer;
 import net.booru.slidingrobots.state.Board;
 import net.booru.slidingrobots.state.Game;
+import net.booru.slidingrobots.state.seed.SeedUtils;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ class ProfileRunner {
         int noSolutionCount = 0;
 
         final Path mapsFilePath = Path.of(mapsFile);
-        final boolean isSaveMapStrings = !Files.exists(mapsFilePath);
+        final boolean isSaveMapStrings = mapsFile.isEmpty() || !Files.exists(mapsFilePath);
         if (isSaveMapStrings) {
             for (int i = 0; i < runCount; i++) {
                 final String seedString = SeedUtils.generateSeedString(dimX, dimY, isOneWay);
