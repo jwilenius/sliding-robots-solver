@@ -28,7 +28,7 @@ class ProfileRunner {
     /**
      * For getting stats on average speed and running profilers, also for generating maps in order of difficulty
      */
-    public static void profileRun(final int runCount, final String mapsFile,
+    public static void profileRun(final int runCount, final String mapsFileName,
                                   final Function<Board, SlidingRobotsSearchAlgorithm> algorithmFactory,
                                   final int dimX, final int dimY)
             throws IOException {
@@ -43,8 +43,8 @@ class ProfileRunner {
         final List<Integer> mapMoves = new ArrayList<>(runCount);
         int noSolutionCount = 0;
 
-        final Path mapsFilePath = Path.of(mapsFile);
-        final boolean isSaveMapStrings = mapsFile.isEmpty() || !Files.exists(mapsFilePath);
+        final Path mapsFilePath = Path.of(mapsFileName);
+        final boolean isSaveMapStrings = mapsFileName.isEmpty() || !Files.exists(mapsFilePath);
         if (isSaveMapStrings) {
             for (int i = 0; i < runCount; i++) {
                 final String seedString = SeedUtils.generateSeedString(dimX, dimY, isOneWay);
@@ -86,11 +86,8 @@ class ProfileRunner {
         }
 
         if (isSaveMapStrings) {
-            final String path = "junk/";
-            final String dumpFile = path + "maps_moves.txt";
-            final Path outputDir = Path.of(path);
-            if (!Files.exists(outputDir)) {
-                Files.createDirectories(outputDir);
+            if (!Files.exists(mapsFilePath)) {
+                Files.createDirectories(mapsFilePath.getParent());
             }
 
             // map file has format "<mapString><space><moveCount>\n"
@@ -104,8 +101,8 @@ class ProfileRunner {
                 );
             }
 
-            Files.write(Path.of(dumpFile), output, Charset.defaultCharset());
-            cLogger.info("Maps dumped to file {}", dumpFile);
+            Files.write(mapsFilePath, output, Charset.defaultCharset());
+            cLogger.info("Maps dumped to file {}", mapsFilePath);
         }
         cLogger.info("Total run count =   {}", mapStringsToDump.size());
         cLogger.info("  no solution # =   {}", noSolutionCount);
