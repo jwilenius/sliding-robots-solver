@@ -27,6 +27,9 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <jdkToolchain>
+                        <version>${java.version}</version>
+                    </jdkToolchain>
                 </configuration>
             </plugin>
             <plugin>
