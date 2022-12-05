@@ -166,13 +166,13 @@ public final class Board {
 
     @Override
     public String toString() {
-        return printBoard(new RobotsState(new byte[0], 0));
+        return printBoard(new RobotsState(new byte[0], (byte) 0));
     }
 
     public String printBoard(final RobotsState robotsState) {
         final String border = "-".repeat(2 * iWidth - 1);
         final StringBuilder sb = new StringBuilder();
-        sb.append("Board for state_id = " + robotsState.getId()).append('\n');
+        sb.append("Board for state_id = ").append(robotsState.getId()).append('\n');
         for (int y = -1; y < iHeight; y++) {
             for (int x = -1; x < iWidth; x++) {
                 // output the coordinates

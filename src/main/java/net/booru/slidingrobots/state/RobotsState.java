@@ -7,23 +7,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represents the current state of robot positions A RobotState is immutable.
  */
 public final class RobotsState {
-    private static final AtomicInteger cCounter = new AtomicInteger(0);
-    private final int iId = cCounter.getAndIncrement();
+    //private static final AtomicInteger cCounter = new AtomicInteger(0);
+    //private final int iId = cCounter.getAndIncrement();
     private final byte[] iPositions;
-    private final int iWaypointsReached;
+    private final byte iWaypointsReached;
 
     /**
      * @param robotPositions   the positions of robots as follows [main_robot_x, main_robot_y, helper_robot_1_x,
      *                         helper_robot_2_x, ..., helper_robot_n_x, helper_robot_n_x]
      * @param waypointsReached the goals that have been reached starting with the first goal at 0. No goal has the value of -1
      */
-    public RobotsState(final byte[] robotPositions, final int waypointsReached) {
+    public RobotsState(final byte[] robotPositions, final byte waypointsReached) {
         iPositions = robotPositions;
         iWaypointsReached = waypointsReached;
     }
@@ -53,15 +52,16 @@ public final class RobotsState {
             robotPositions[index + 1] = (byte) pointPiecePair.first.y;
         }
 
-        return new RobotsState(robotPositions, 0);
+        return new RobotsState(robotPositions, (byte) 0);
     }
 
     public RobotsState withNextGoal() {
-        return new RobotsState(iPositions, iWaypointsReached + 1);
+        return new RobotsState(iPositions, (byte) (iWaypointsReached + 1));
     }
 
     public long getId() {
-        return iId;
+//        return iId;
+        return -1L;
     }
 
     public int getWaypointsReached() {
@@ -139,7 +139,8 @@ public final class RobotsState {
 
     @Override
     public String toString() {
-        return "ID=" + iId;
+        //return "ID=" + iId;
+        return Arrays.toString(iPositions);
     }
 
     @Override
