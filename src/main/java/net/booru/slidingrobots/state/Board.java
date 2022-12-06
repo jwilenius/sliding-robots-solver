@@ -12,6 +12,7 @@ import java.util.List;
  * is used to make moves given a RobotsState, which then returns a new RobotsState.
  */
 public final class Board {
+    private final int MAIN_ROBOT_INDEX = 0;
     private final int iWidth;
     private final int iHeight;
     private final Piece[][] iImmutableBoard;
@@ -55,11 +56,13 @@ public final class Board {
     }
 
     public boolean isGoalReached(final RobotsState robotsState) {
-        return robotsState.getPositionX(0) == iGoalPosition.x && robotsState.getPositionY(0) == iGoalPosition.y;
+        return robotsState.getPositionX(MAIN_ROBOT_INDEX) == iGoalPosition.x &&
+                robotsState.getPositionY(MAIN_ROBOT_INDEX) == iGoalPosition.y;
     }
 
     public boolean isStartReached(final RobotsState robotsState) {
-        return robotsState.getPositionX(0) == iStartPosition.x && robotsState.getPositionY(0) == iStartPosition.y;
+        return robotsState.getPositionX(MAIN_ROBOT_INDEX) == iStartPosition.x &&
+                robotsState.getPositionY(MAIN_ROBOT_INDEX) == iStartPosition.y;
     }
 
     /**
@@ -78,10 +81,7 @@ public final class Board {
         for (int robotIndex = 0; robotIndex < robotCount; robotIndex++) {
             for (Direction direction : directions) {
                 final RobotsState nextState = makeMove(robotIndex, direction, robotsState);
-                final boolean isSamePositionAfterMove =
-                        nextState.getPositionX(robotIndex) == robotsState.getPositionX(robotIndex) &&
-                                nextState.getPositionY(robotIndex) == robotsState.getPositionY(robotIndex);
-                if (!isSamePositionAfterMove) {
+                if (!nextState.isSamePosition(robotsState, robotIndex)) {
                     expandedState.add(nextState);
                 }
             }
@@ -117,8 +117,8 @@ public final class Board {
      * @param robotsState the current state of the robots
      * @return the coordinate value where collision occurs
      */
-    private int findPositionBeforeCollision(final int robotIndex, final Direction direction,
-                                            final RobotsState robotsState) {
+    protected int findPositionBeforeCollision(final int robotIndex, final Direction direction,
+                                              final RobotsState robotsState) {
         final int robotPositionX = robotsState.getPositionX(robotIndex);
         final int robotPositionY = robotsState.getPositionY(robotIndex);
 
@@ -166,10 +166,10 @@ public final class Board {
 
     @Override
     public String toString() {
-        return printBoard(new RobotsState(new byte[0], 0));
+        return toBoardString(new RobotsState(new byte[0], 0));
     }
 
-    public String printBoard(final RobotsState robotsState) {
+    public String toBoardString(final RobotsState robotsState) {
         final String border = "-".repeat(2 * iWidth - 1);
         final StringBuilder sb = new StringBuilder();
         sb.append("Board for state_id = " + robotsState.getId()).append('\n');

@@ -9,7 +9,7 @@ import net.booru.slidingrobots.state.RobotsState;
 public record Node(RobotsState state, Node previousNode, int depth) {
 
     public Node withUpdatedGoalsReached() {
-        return new Node(state.withNextGoal(), previousNode, depth);
+        return new Node(state.withNextWaypoint(), previousNode, depth);
     }
 
     @Override

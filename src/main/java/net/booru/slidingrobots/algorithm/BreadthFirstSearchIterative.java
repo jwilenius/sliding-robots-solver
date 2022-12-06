@@ -14,10 +14,8 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This is a somewhat naive solution that is generalized with {@link Waypoint} abstraction.
@@ -53,8 +51,8 @@ public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm
     }
 
     /**
-     * @param startState  the initial state of the robotss.
-     * @param waypoints the definition of the sequential targets we must reach in the game
+     * @param startState the initial state of the robots.
+     * @param waypoints  the definition of the sequential targets we must reach in the game
      * @return The solution path including the start state, or empty if no solution was found.
      */
     @Override
@@ -89,12 +87,14 @@ public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm
     private List<Node> searchBFS(final Node startNode,
                                  final Waypoint[] waypointMap,
                                  final Statistics mutableStatistics) {
-        final BitSet seenStates = new BitSet(3_407_872);
+        final BitSet seenStates = new BitSet(RobotsState.MAX_STATES);
+        addSeenState(seenStates, startNode.state());
+
         final List<Node> solutions = new ArrayList<>(100);
         final Deque<Node> nodesToExpand = new LinkedList<>();
         nodesToExpand.add(startNode);
 
-        final int finalWaypoint = waypointMap.length-1;
+        final int finalWaypoint = waypointMap.length - 1;
 
         int bestSolutionDepth = Integer.MAX_VALUE;
 
@@ -121,6 +121,8 @@ public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm
                     solutions.add(currentNodeAdditionalGoal);
                 }
             } else {
+                //TODO: we can save also the direction taken from parent to get to current, and not walk that way when generating
+                // neighbors, can also be used to extract moves better.
                 final List<RobotsState> neighbors = iBoard.getNeighbors(currentNode.state());
                 for (int i = 0; i < neighbors.size(); i++) {
                     final RobotsState neighbor = neighbors.get(i);

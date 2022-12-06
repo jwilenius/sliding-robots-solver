@@ -139,6 +139,8 @@ public class Game {
                 .collect(Collectors.toList());
 
         final Board board = new Board(pieces, width, height);
+        RobotsState.resetRobotsState(Math.max(width, height));
+
         final RobotsState initialRobotsState = RobotsState.valueOf(robotList);
         return new Game(isOneWay, board, initialRobotsState, mapString, seedString);
     }
