@@ -15,7 +15,7 @@ class BoardTest {
                 . . . g
                 """);
         final Board board = game.getBoard();
-        final RobotsState state = game.getInitialRobotsState();
+        final int state = game.getInitialRobotsState();
         System.out.println(board.toBoardString(state));
 
         assertEquals(1, board.findPositionBeforeCollision(0, Direction.down, state));
@@ -36,7 +36,7 @@ class BoardTest {
                 . . . b . . g
                 """);
         final Board board = game.getBoard();
-        final RobotsState state = game.getInitialRobotsState();
+        final int state = game.getInitialRobotsState();
         System.out.println(board.toBoardString(state));
 
         assertEquals(5, board.findPositionBeforeCollision(0, Direction.down, state));

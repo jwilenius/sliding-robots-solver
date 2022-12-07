@@ -7,7 +7,6 @@ import net.booru.slidingrobots.algorithm.model.Solution;
 import net.booru.slidingrobots.common.ArgumentParser;
 import net.booru.slidingrobots.state.Board;
 import net.booru.slidingrobots.state.Game;
-import net.booru.slidingrobots.state.RobotsState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,7 +138,7 @@ public class Main {
         final boolean isVerbose = verboseLevel >= 0;
         final Game game = Game.valueOf(mapStringOrSeed);
         final Board board = game.getBoard();
-        final RobotsState robotsState = game.getInitialRobotsState();
+        final int robotsState = game.getInitialRobotsState();
 
         if (isVerbose) {
             cLogger.info("");
@@ -159,7 +158,7 @@ public class Main {
 
                 if (verboseLevel >= 1) {
                     int i = 0;
-                    for (RobotsState s : solution.getSolutionPath()) {
+                    for (int s : solution.getSolutionPath()) {
                         cLogger.info("Board i={}", i++);
                         board.boardToLogLines(s).forEach(cLogger::info);
                     }

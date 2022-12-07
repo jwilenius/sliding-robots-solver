@@ -14,8 +14,8 @@ public final class RobotsState {
     static final int BITS_FOR_WAYPOINTS = 2;
     static final int BITS_PER_POSITION = 4;
     static final int NOT_DEFINED = (int) Math.pow(2, BITS_PER_POSITION) - 1; // positions with this value for robots that do not exist
-    static final int MAX_ROBOTS_COUNT = 3;
-    static final int BITS_TOTAL = BITS_PER_POSITION * 2 * MAX_ROBOTS_COUNT + BITS_FOR_WAYPOINTS;
+    static final int MAX_ROBOT_COUNT = 3;
+    static final int BITS_TOTAL = BITS_PER_POSITION * 2 * MAX_ROBOT_COUNT + BITS_FOR_WAYPOINTS;
     static final int MAX_WAYPOINT = (int) (Math.pow(2, BITS_FOR_WAYPOINTS) - 1);
     public static final int MAX_STATES = (int) Math.pow(2, BITS_TOTAL) - 1;  // ca 65 million
 
@@ -41,28 +41,16 @@ public final class RobotsState {
     static final int[] SHIFTS_ROBOT = {0, 8, 16};
     static final int SHIFTS_WAYPOINT = 24;
 
-    private int iActualRobotCount = -1;
-
-    private final int iState;
-
-    public static void resetRobotsState(final int maxValueAnyDimension) {
-        // bit-string length... this is not done often
-        if (Integer.toBinaryString(maxValueAnyDimension).length() > BITS_PER_POSITION) {
-            throw new IllegalArgumentException("We can support a maximum of 4 bits per position element");
-        }
-    }
-
-
     /**
      * @param robotPositions   the positions of robots as follows [main_robot_x, main_robot_y, helper_robot_1_x,
      *                         helper_robot_2_x, ..., helper_robot_n_x, helper_robot_n_x]
      * @param waypointsReached the goals that have been reached starting with the first goal at 0. No goal has the value of -1
      */
-    public RobotsState(final byte[] robotPositions, final int waypointsReached) {
-        iState = encodeState(waypointsReached, robotPositions);
+    public static int valueOf(final byte[] robotPositions, final int waypointsReached) {
+        return encodeState(waypointsReached, robotPositions);
     }
 
-    public static RobotsState valueOf(final List<Pair<Point, Piece>> robots) {
+    public static int valueOf(final List<Pair<Point, Piece>> robots) {
         final Pair<Point, Piece> mainRobot = robots.stream().filter(pair -> pair.second == Piece.main_robot).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No main robot"));
 
@@ -82,17 +70,26 @@ public final class RobotsState {
             robotPositions[index + 1] = (byte) pointAndPiece.first.y;
         }
 
-        return new RobotsState(robotPositions, 0);
+        return valueOf(robotPositions, 0);
     }
 
-    private RobotsState(final int state) {
-        iState = state;
+    public static int getRobotCount(final int state) {
+        int count = 0;
+        final int positions = state & MASK_ROBOT_POSITIONS;
+        for (int i = MAX_ROBOT_COUNT - 1; i >= 0; i--) {
+            if ((positions & MASK_ROBOT[i]) != MASK_ROBOT[i]) {
+                count = i + 1;
+                break;
+            }
+        }
+
+        return count;
     }
 
-    public static int encodeState(final int waypointsReached, final byte[] positions) {
+    static int encodeState(final int waypointsReached, final byte[] positions) {
         int state = waypointsReached;
 
-        for (int i = MAX_ROBOTS_COUNT * 2; i > positions.length; i--) {
+        for (int i = MAX_ROBOT_COUNT * 2; i > positions.length; i--) {
             state = (state << BITS_PER_POSITION) | NOT_DEFINED;
         }
 
@@ -103,10 +100,10 @@ public final class RobotsState {
         return state;
     }
 
-    public static Pair<Integer, byte[]> decodeState(final int state) {
+    static Pair<Integer, byte[]> decodeState(final int state) {
 
-        final byte[] positions = new byte[MAX_ROBOTS_COUNT * 2];
-        for (int i = 0; i < MAX_ROBOTS_COUNT; i++) {
+        final byte[] positions = new byte[MAX_ROBOT_COUNT * 2];
+        for (int i = 0; i < MAX_ROBOT_COUNT; i++) {
             positions[2 * i] = (byte) decodeX(i, state);
             positions[2 * i + 1] = (byte) decodeY(i, state);
         }
@@ -125,7 +122,7 @@ public final class RobotsState {
         return Pair.of(waypointsReached, actualPositions);
     }
 
-    public static int increaseWaypoint(final int state) {
+    static int increaseWaypoint(final int state) {
         final int currentWaypoint = (state & MASK_WAYPOINT) >> SHIFTS_WAYPOINT;
         if (currentWaypoint >= MAX_WAYPOINT) {
             throw new IllegalStateException("waypoint maximum reached");
@@ -136,87 +133,69 @@ public final class RobotsState {
         return newState;
     }
 
-    public static int decodeWaypoint(final int stateId) {
+    static int decodeWaypoint(final int stateId) {
         final int currentWaypoint = (stateId & MASK_WAYPOINT) >> SHIFTS_WAYPOINT;
         return currentWaypoint;
     }
 
-    public static int decodeX(int robotIndex, int state) {
+    static int decodeX(int robotIndex, int state) {
         return (state & MASK_ROBOT_X[robotIndex]) >> SHIFTS_ROBOT_X[robotIndex];
     }
 
-    public static int decodeY(int robotIndex, int state) {
+    static int decodeY(int robotIndex, int state) {
         return (state & MASK_ROBOT_Y[robotIndex]) >> SHIFTS_ROBOT_Y[robotIndex];
     }
 
-    private int decodePosition(final int robotIndex, final int state) {
+    static int decodePosition(final int robotIndex, final int state) {
         return (state & MASK_ROBOT[robotIndex]) >> SHIFTS_ROBOT[robotIndex];
     }
 
-    public static int encodeX(int x, int robotIndex, int state) {
+    static int encodeX(int x, int robotIndex, int state) {
         final int encodedX = x << SHIFTS_ROBOT_X[robotIndex];
         final int newState = (state & ~MASK_ROBOT_X[robotIndex]) | encodedX;
         return newState;
     }
 
-    public static int encodeY(int y, int robotIndex, int state) {
+    static int encodeY(int y, int robotIndex, int state) {
         final int encodedY = y << SHIFTS_ROBOT_Y[robotIndex];
         final int newState = (state & ~MASK_ROBOT_Y[robotIndex]) | encodedY;
         return newState;
     }
 
-    public int getRobotCount() {
-        if (iActualRobotCount == -1) {
-            iActualRobotCount = 0;
-            final int positions = iState & MASK_ROBOT_POSITIONS;
-            for (int i = MAX_ROBOTS_COUNT - 1; i >= 0; i--) {
-                if ((positions & MASK_ROBOT[i]) != MASK_ROBOT[i]) {
-                    iActualRobotCount = i + 1;
-                    break;
-                }
-            }
-        }
-        return iActualRobotCount;
+    public static int getWaypointsReached(int state) {
+        return decodeWaypoint(state);
     }
 
-    public int getId() {
-        return iState;
+    public static int withNextWaypoint(int state) {
+        return increaseWaypoint(state);
     }
 
-    public int getWaypointsReached() {
-        return decodeWaypoint(iState);
-    }
-
-    public RobotsState withNextWaypoint() {
-        return new RobotsState(increaseWaypoint(iState));
-    }
-
-    public RobotsState withPositionX(final int robotIndex, final int x) {
-        if (getPositionX(robotIndex) == x) {
-            return this;
+    public static int withPositionX(final int robotIndex, final int x, final int state) {
+        if (getPositionX(robotIndex, state) == x) {
+            return state;
         }
 
-        return new RobotsState(encodeX(x, robotIndex, iState));
+        return encodeX(x, robotIndex, state);
     }
 
-    public RobotsState withPositionY(final int robotIndex, final int y) {
-        if (getPositionY(robotIndex) == y) {
-            return this;
+    public static int withPositionY(final int robotIndex, final int y, final int state) {
+        if (getPositionY(robotIndex, state) == y) {
+            return state;
         }
 
-        return new RobotsState(encodeY(y, robotIndex, iState));
+        return encodeY(y, robotIndex, state);
     }
 
-    public int getPositionX(final int robotIndex) {
-        return decodeX(robotIndex, iState);
+    public static int getPositionX(final int robotIndex, final int state) {
+        return decodeX(robotIndex, state);
     }
 
-    public int getPositionY(final int robotIndex) {
-        return decodeY(robotIndex, iState);
+    public static int getPositionY(final int robotIndex, final int state) {
+        return decodeY(robotIndex, state);
     }
 
-    public boolean isSamePosition(final RobotsState robotsState, final int robotIndex) {
-        return decodePosition(robotIndex, robotsState.iState) == decodePosition(robotIndex, iState);
+    public static boolean isSamePosition(final int state1, final int state2, final int robotIndex) {
+        return decodePosition(robotIndex, state1) == decodePosition(robotIndex, state2);
     }
 
     /**
@@ -225,13 +204,16 @@ public final class RobotsState {
      * @param robotIndex the robot to ignore
      * @return true if another robot (not robotIndex) is blocking position (x,y) else false
      */
-    public boolean isOtherRobotBlocking(final int x, final int y, final int robotIndex) {
-        for (int i = 0, len = getRobotCount(); i < len; i++) {
-            if (i == robotIndex) {
+    public static boolean isOtherRobotBlocking(final int x, final int y, final int robotIndex, final int state) {
+        for (int otherRobotIndex = 0; otherRobotIndex < MAX_ROBOT_COUNT; otherRobotIndex++) {
+            if (otherRobotIndex == robotIndex) {
                 continue;
             }
+            if (getPositionX(otherRobotIndex, state) == NOT_DEFINED) {
+                return false;
+            }
 
-            if (isBlocking(i, x, y)) {
+            if (isBlocking(otherRobotIndex, x, y, state)) {
                 return true;
             }
         }
@@ -244,22 +226,25 @@ public final class RobotsState {
      * @param y position
      * @return the index [0..robotCount-1] of the robot at position x,y. -1 if no robot is found.
      */
-    public int getRobotAtPosition(final int x, final int y) {
-        for (int i = 0, len = getRobotCount(); i < len; i++) {
-            if (isBlocking(i, x, y)) {
-                return i;
+    public static int getRobotAtPosition(final int x, final int y, final int state) {
+        for (int robotIndex = 0; robotIndex < MAX_ROBOT_COUNT; robotIndex++) {
+            if (getPositionX(robotIndex, state) == NOT_DEFINED) {
+                return -1;
+            }
+
+            if (isBlocking(robotIndex, x, y, state)) {
+                return robotIndex;
             }
         }
         return -1;
     }
 
-    private boolean isBlocking(final int robotIndex, final int x, final int y) {
-        return getPositionX(robotIndex) == x && getPositionY(robotIndex) == y;
+    private static boolean isBlocking(final int robotIndex, final int x, final int y, final int state) {
+        return getPositionX(robotIndex, state) == x && getPositionY(robotIndex, state) == y;
     }
 
-    @Override
-    public String toString() {
-        return "%s : [%s]".formatted(toStringBin(iState), iState);
+    public static String toString(final int state) {
+        return "%s : [%s]".formatted(toStringBin(state), state);
     }
 
     public static String toStringBin(final int stateIn) {
@@ -284,22 +269,5 @@ public final class RobotsState {
                 s.substring(18, 22),
                 s.substring(22, 26)
         );
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final RobotsState that = (RobotsState) o;
-        return iState == that.iState; // since unique per state
-    }
-
-    @Override
-    public int hashCode() {
-        return iState; // since unique per state
     }
 }

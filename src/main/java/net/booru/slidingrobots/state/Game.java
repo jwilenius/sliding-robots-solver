@@ -17,10 +17,10 @@ public class Game {
     private final boolean iIsOneWay;
     private final Board iBoard;
     private final String iMapString;
-    private final RobotsState iInitialRobotsState;
+    private final int iInitialRobotsState;
     private final String iSeedString;
 
-    public Game(final boolean isOneWay, final Board board, final RobotsState initialRobotsState, final String mapString, final String seedString) {
+    public Game(final boolean isOneWay, final Board board, final int initialRobotsState, final String mapString, final String seedString) {
         iIsOneWay = isOneWay;
         iBoard = board;
         iInitialRobotsState = initialRobotsState;
@@ -138,10 +138,10 @@ public class Game {
                 .filter(pointPieceEntry -> !pointPieceEntry.second.isImmovable())
                 .collect(Collectors.toList());
 
-        final Board board = new Board(pieces, width, height);
-        RobotsState.resetRobotsState(Math.max(width, height));
+        final int initialRobotsState = RobotsState.valueOf(robotList);
+        final int robotsCount = RobotsState.getRobotCount(initialRobotsState);
+        final Board board = new Board(pieces, width, height, robotsCount);
 
-        final RobotsState initialRobotsState = RobotsState.valueOf(robotList);
         return new Game(isOneWay, board, initialRobotsState, mapString, seedString);
     }
 
@@ -200,7 +200,7 @@ public class Game {
         return iSeedString;
     }
 
-    public RobotsState getInitialRobotsState() {
+    public int getInitialRobotsState() {
         return iInitialRobotsState;
     }
 

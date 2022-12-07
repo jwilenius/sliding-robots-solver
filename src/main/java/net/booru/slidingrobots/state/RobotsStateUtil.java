@@ -27,8 +27,8 @@ public final class RobotsStateUtil {
      * @param endNode a node
      * @return the list of states from start state to the final state in endNode.
      */
-    public static List<RobotsState> extractRobotStatesFromNodePath(final Node endNode) {
-        final LinkedList<RobotsState> path = new LinkedList<>();
+    public static List<Integer> extractRobotStatesFromNodePath(final Node endNode) {
+        final LinkedList<Integer> path = new LinkedList<>();
         for (Node node = endNode; node != null; node = node.previousNode()) {
             path.addFirst(node.state());
         }
@@ -44,19 +44,19 @@ public final class RobotsStateUtil {
      * @param moves a sequence of moves where for each pair of consecutive states only one robot has moved.
      * @return a nice string representation of the moves
      */
-    public static String toStringShortMove(final List<RobotsState> moves) {
+    public static String toStringShortMove(final List<Integer> moves) {
         final StringBuilder sb = new StringBuilder(100);
 
         sb.append("Moves \"piece_index to (to_pos_X, to_pos_Y)\":   ");
 
         for (int i = 1; i < moves.size(); i++) {
-            final RobotsState previousState = moves.get(i - 1);
-            final RobotsState currentState = moves.get(i);
+            final int previousState = moves.get(i - 1);
+            final int currentState = moves.get(i);
             final int robotIndex = getRobotIndexOfFirstDifference(previousState, currentState);
 
             sb.append(robotIndex).append(" -> ")
-                    .append('(').append(currentState.getPositionX(robotIndex))
-                    .append(',').append(currentState.getPositionY(robotIndex)).append(')')
+                    .append('(').append(RobotsState.getPositionX(robotIndex, currentState))
+                    .append(',').append(RobotsState.getPositionY(robotIndex, currentState)).append(')')
                     .append("  |  ");
         }
 
@@ -120,7 +120,7 @@ public final class RobotsStateUtil {
      * @param states
      * @return the json string
      */
-    public static String toStringJsonResult(final List<RobotsState> states) {
+    public static String toStringJsonResult(final List<Integer> states) {
         /*
          [ {
              "dir": {"dx": 1,"dy": 0},
@@ -142,7 +142,7 @@ public final class RobotsStateUtil {
         return listOfJson;
     }
 
-    public static List<String> toStringHumanReadable(final List<RobotsState> states) {
+    public static List<String> toStringHumanReadable(final List<Integer> states) {
         final List<Move> moves = getMoveList(states);
         int step = 0;
         List<String> descriptions = new ArrayList<>();
@@ -152,20 +152,20 @@ public final class RobotsStateUtil {
         return descriptions;
     }
 
-    public static List<Move> getMoveList(final List<RobotsState> states) {
+    public static List<Move> getMoveList(final List<Integer> states) {
         final List<Move> moves = new ArrayList<>(states.size() - 1);
 
         for (int i = 1; i < states.size(); i++) {
-            final RobotsState previousState = states.get(i - 1);
-            final RobotsState currentState = states.get(i);
+            final int previousState = states.get(i - 1);
+            final int currentState = states.get(i);
             final int robotIndex = getRobotIndexOfFirstDifference(previousState, currentState);
 
-            final int x = previousState.getPositionX(robotIndex);
-            final int y = previousState.getPositionY(robotIndex);
+            final int x = RobotsState.getPositionX(robotIndex, previousState);
+            final int y = RobotsState.getPositionY(robotIndex, previousState);
             final Pos pos = new Pos(x, y);
 
-            final int newX = currentState.getPositionX(robotIndex);
-            final int newY = currentState.getPositionY(robotIndex);
+            final int newX = RobotsState.getPositionX(robotIndex, currentState);
+            final int newY = RobotsState.getPositionY(robotIndex, currentState);
             final Dir dir = new Dir(newX - x, newY - y);
 
             final Move move = new Move(dir, pos, robotIndex);
@@ -181,10 +181,10 @@ public final class RobotsStateUtil {
      * @param nextState the second state != state1
      * @return the first robot index where the states differ.
      */
-    public static int getRobotIndexOfFirstDifference(final RobotsState state, final RobotsState nextState) {
-        for (int i = 0; i < nextState.getRobotCount(); i++) {
-            if (state.getPositionX(i) != nextState.getPositionX(i) ||
-                    state.getPositionY(i) != nextState.getPositionY(i)) {
+    public static int getRobotIndexOfFirstDifference(final int state, final int nextState) {
+        for (int i = 0; i < RobotsState.MAX_ROBOT_COUNT; i++) {
+            if (RobotsState.getPositionX(i, state) != RobotsState.getPositionX(i, nextState) ||
+                    RobotsState.getPositionY(i, state) != RobotsState.getPositionY(i, nextState)) {
                 return i;
             }
         }
@@ -193,10 +193,10 @@ public final class RobotsStateUtil {
     }
 
 
-    public static Direction getRobotMovementDirection(final RobotsState state, final RobotsState nextState) {
-        for (int i = 0; i < nextState.getRobotCount(); i++) {
-            final int xDiff = nextState.getPositionX(i) - state.getPositionX(i);
-            final int yDiff = nextState.getPositionY(i) - state.getPositionY(i);
+    public static Direction getRobotMovementDirection(final int state, final int nextState) {
+        for (int i = 0; i < RobotsState.MAX_ROBOT_COUNT; i++) {
+            final int xDiff = RobotsState.getPositionX(i, nextState) - RobotsState.getPositionX(i, state);
+            final int yDiff = RobotsState.getPositionY(i, nextState) - RobotsState.getPositionY(i, state);
             if (xDiff != 0 || yDiff != 0) {
                 return Direction.valueOf(xDiff, yDiff);
             }

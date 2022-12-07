@@ -6,14 +6,14 @@ import net.booru.slidingrobots.state.RobotsState;
 /**
  * Keep track of the path to the end state.
  */
-public record Node(RobotsState state, Node previousNode, int depth) {
+public record Node(int state, Node previousNode, int depth) {
 
     public Node withUpdatedGoalsReached() {
-        return new Node(state.withNextWaypoint(), previousNode, depth);
+        return new Node(RobotsState.withNextWaypoint(state), previousNode, depth);
     }
 
     @Override
     public String toString() {
-        return state.toString() + ":" + depth;
+        return RobotsState.toString(state) + ": d=" + depth;
     }
 }

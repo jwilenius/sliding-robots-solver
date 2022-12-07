@@ -1,6 +1,5 @@
 package net.booru.slidingrobots.algorithm.model;
 
-import net.booru.slidingrobots.state.RobotsState;
 import net.booru.slidingrobots.state.RobotsStateUtil;
 import org.apache.logging.log4j.util.Strings;
 
@@ -9,17 +8,17 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Solution {
-    private final List<RobotsState> iSolutionPath;
+    private final List<Integer> iSolutionPath;
     private final Statistics iStatistics;
     private final String iAlgorithmName;
 
-    public Solution(final List<RobotsState> solutionPath, final Statistics statistics) {
+    public Solution(final List<Integer> solutionPath, final Statistics statistics) {
         iSolutionPath = solutionPath;
         iStatistics = statistics;
         iAlgorithmName = "no name";
     }
 
-    public Solution(final List<RobotsState> solutionPath, final Statistics statistics, final String algorithmName) {
+    public Solution(final List<Integer> solutionPath, final Statistics statistics, final String algorithmName) {
         iSolutionPath = List.copyOf(solutionPath);
         iStatistics = statistics;
         iAlgorithmName = algorithmName;
@@ -33,7 +32,7 @@ public class Solution {
      * @return the solution path from (and including) the start state to the end state.
      * The length of the solution path is thus 1+ solution length.
      */
-    public List<RobotsState> getSolutionPath() {
+    public List<Integer> getSolutionPath() {
         return iSolutionPath;
     }
 

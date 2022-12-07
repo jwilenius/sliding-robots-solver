@@ -56,7 +56,7 @@ public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm
      * @return The solution path including the start state, or empty if no solution was found.
      */
     @Override
-    public Solution run(final RobotsState startState, final List<Waypoint> waypoints) throws NoSolutionException {
+    public Solution run(final int startState, final List<Waypoint> waypoints) throws NoSolutionException {
         final Timer timer = new Timer();
         final Statistics mutableStatistics = new Statistics();
 
@@ -71,7 +71,7 @@ public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm
             throw new NoSolutionException();
         }
 
-        final List<RobotsState> solutionPath = RobotsStateUtil.extractRobotStatesFromNodePath(solutions.get(0));
+        final List<Integer> solutionPath = RobotsStateUtil.extractRobotStatesFromNodePath(solutions.get(0));
         timer.stop();
 
         mutableStatistics.setSolutionLength(solutionPath.size() - 1); // path includes start state
@@ -88,7 +88,7 @@ public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm
                                  final Waypoint[] waypointMap,
                                  final Statistics mutableStatistics) {
         final BitSet seenStates = new BitSet(RobotsState.MAX_STATES);
-        addSeenState(seenStates, startNode.state());
+        seenStates.set(startNode.state());
 
         final List<Node> solutions = new ArrayList<>(100);
         final Deque<Node> nodesToExpand = new LinkedList<>();
@@ -102,7 +102,7 @@ public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm
             final Node currentNode = nodesToExpand.poll();
             mutableStatistics.increaseStatesVisited(1);
 
-            final int nextWaypoint = currentNode.state().getWaypointsReached() + 1;
+            final int nextWaypoint = RobotsState.getWaypointsReached(currentNode.state()) + 1;
             final boolean isWaypointReached = waypointMap[nextWaypoint].isSatisfied(currentNode.state());
 
             if (isWaypointReached) {
@@ -123,15 +123,15 @@ public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm
             } else {
                 //TODO: we can save also the direction taken from parent to get to current, and not walk that way when generating
                 // neighbors, can also be used to extract moves better.
-                final List<RobotsState> neighbors = iBoard.getNeighbors(currentNode.state());
+                final List<Integer> neighbors = iBoard.getNeighbors(currentNode.state());
                 for (int i = 0; i < neighbors.size(); i++) {
-                    final RobotsState neighbor = neighbors.get(i);
-                    if (isSeenState(seenStates, neighbor)) {
+                    final int neighbor = neighbors.get(i);
+                    if (seenStates.get(neighbor)) {
                         continue;
                     }
 
                     nodesToExpand.add(new Node(neighbor, currentNode, currentNode.depth() + 1));
-                    addSeenState(seenStates, neighbor);
+                    seenStates.set(neighbor);
                     mutableStatistics.increaseStatesSeen();
                 }
                 mutableStatistics.increaseStatesCreated(neighbors.size());
@@ -139,13 +139,5 @@ public class BreadthFirstSearchIterative implements SlidingRobotsSearchAlgorithm
         }
 
         return solutions;
-    }
-
-    private static void addSeenState(final BitSet seenStates, final RobotsState state) {
-        seenStates.set(state.getId());
-    }
-
-    private static boolean isSeenState(final BitSet seenStates, final RobotsState state) {
-        return seenStates.get(state.getId());
     }
 }

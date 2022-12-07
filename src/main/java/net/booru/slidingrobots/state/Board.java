@@ -1,5 +1,6 @@
 package net.booru.slidingrobots.state;
 
+import net.booru.slidingrobots.common.Condition;
 import net.booru.slidingrobots.common.Direction;
 import net.booru.slidingrobots.common.Pair;
 import net.booru.slidingrobots.common.Point;
@@ -18,10 +19,15 @@ public final class Board {
     private final Piece[][] iImmutableBoard;
     private final Point iStartPosition;
     private final Point iGoalPosition;
+    private final int iRobotCount;
 
-    public Board(final List<Pair<Point, Piece>> startPieces, final int width, final int height) {
+    public Board(final List<Pair<Point, Piece>> startPieces, final int width, final int height, final int robotCount) {
+        Condition.require(width > 0 && width < 15);
+        Condition.require(height > 0 && height < 15);
+        Condition.require(robotCount > 0 && robotCount <= RobotsState.MAX_ROBOT_COUNT);
         iWidth = width;
         iHeight = height;
+        iRobotCount = robotCount;
         iImmutableBoard = new Piece[width][height];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -44,25 +50,21 @@ public final class Board {
                 }
             }
         }
-        if (startPosition == null) {
-            throw new IllegalArgumentException("startPieces must contain the start position");
-        }
-        if (goalPosition == null) {
-            throw new IllegalArgumentException("startPieces must contain the goal position");
-        }
+        Condition.require(startPosition != null, "startPieces must contain the start position");
+        Condition.require(goalPosition != null, "startPieces must contain the goal position");
 
         iGoalPosition = goalPosition;
         iStartPosition = startPosition;
     }
 
-    public boolean isGoalReached(final RobotsState robotsState) {
-        return robotsState.getPositionX(MAIN_ROBOT_INDEX) == iGoalPosition.x &&
-                robotsState.getPositionY(MAIN_ROBOT_INDEX) == iGoalPosition.y;
+    public boolean isGoalReached(final int robotsState) {
+        return RobotsState.getPositionX(MAIN_ROBOT_INDEX, robotsState) == iGoalPosition.x &&
+                RobotsState.getPositionY(MAIN_ROBOT_INDEX, robotsState) == iGoalPosition.y;
     }
 
-    public boolean isStartReached(final RobotsState robotsState) {
-        return robotsState.getPositionX(MAIN_ROBOT_INDEX) == iStartPosition.x &&
-                robotsState.getPositionY(MAIN_ROBOT_INDEX) == iStartPosition.y;
+    public boolean isStartReached(final int robotsState) {
+        return RobotsState.getPositionX(MAIN_ROBOT_INDEX, robotsState) == iStartPosition.x &&
+                RobotsState.getPositionY(MAIN_ROBOT_INDEX, robotsState) == iStartPosition.y;
     }
 
     /**
@@ -72,16 +74,17 @@ public final class Board {
      * @param robotsState the current positions of the robots and other information
      * @return the new unseen neighbors of {@code currentState}, may be empty.
      */
-    public List<RobotsState> getNeighbors(final RobotsState robotsState) {
-        final int robotCount = robotsState.getRobotCount();
+    public List<Integer> getNeighbors(final int robotsState) {
+        final int robotCount = iRobotCount;
         final Direction[] directions = Direction.values();
 
-        final List<RobotsState> expandedState = new ArrayList<>(robotCount * directions.length);
+        final List<Integer> expandedState = new ArrayList<>(robotCount * directions.length);
 
         for (int robotIndex = 0; robotIndex < robotCount; robotIndex++) {
             for (Direction direction : directions) {
-                final RobotsState nextState = makeMove(robotIndex, direction, robotsState);
-                if (!nextState.isSamePosition(robotsState, robotIndex)) {
+                final int nextState = makeMove(robotIndex, direction, robotsState);
+                if (!RobotsState.isSamePosition(nextState, robotsState, robotIndex)) {
+                    //if (!nextState.isSamePosition(robotsState, robotIndex)) {
                     expandedState.add(nextState);
                 }
             }
@@ -93,16 +96,16 @@ public final class Board {
      * @param robotIndex  the robot to move
      * @param direction   a direction resulting in possibly a new {@link RobotsState}, or the same {@link RobotsState}.
      * @param robotsState the current state
-     * @return the new boardState after robot at {@code robotIndex} was moved in {@code direction}. If the move result
+     * @return the new state after robot at {@code robotIndex} was moved in {@code direction}. If the move result
      * in the same state as {@code robotState} then the {@code robotState} object is returned.
      */
-    public RobotsState makeMove(final int robotIndex, final Direction direction, final RobotsState robotsState) {
+    public int makeMove(final int robotIndex, final Direction direction, final int robotsState) {
         final int positionBeforeCollision = findPositionBeforeCollision(robotIndex, direction, robotsState);
         switch (direction) {
             case up, down:
-                return robotsState.withPositionY(robotIndex, positionBeforeCollision);
+                return RobotsState.withPositionY(robotIndex, positionBeforeCollision, robotsState);
             case left, right:
-                return robotsState.withPositionX(robotIndex, positionBeforeCollision);
+                return RobotsState.withPositionX(robotIndex, positionBeforeCollision, robotsState);
             default:
                 throw new IllegalStateException("Unknown Case Exception.");
         }
@@ -117,16 +120,15 @@ public final class Board {
      * @param robotsState the current state of the robots
      * @return the coordinate value where collision occurs
      */
-    protected int findPositionBeforeCollision(final int robotIndex, final Direction direction,
-                                              final RobotsState robotsState) {
-        final int robotPositionX = robotsState.getPositionX(robotIndex);
-        final int robotPositionY = robotsState.getPositionY(robotIndex);
+    protected int findPositionBeforeCollision(final int robotIndex, final Direction direction, final int robotsState) {
+        final int robotPositionX = RobotsState.getPositionX(robotIndex, robotsState);
+        final int robotPositionY = RobotsState.getPositionY(robotIndex, robotsState);
 
         switch (direction) {
             case up:
                 for (int y = robotPositionY - 1; y >= 0; --y) {
                     if (iImmutableBoard[robotPositionX][y].isBlocking() ||
-                            robotsState.isOtherRobotBlocking(robotPositionX, y, robotIndex)) {
+                            RobotsState.isOtherRobotBlocking(robotPositionX, y, robotIndex, robotsState)) {
                         return y + 1;
                     }
                 }
@@ -135,7 +137,7 @@ public final class Board {
             case down:
                 for (int y = robotPositionY + 1; y < iHeight; ++y) {
                     if (iImmutableBoard[robotPositionX][y].isBlocking() ||
-                            robotsState.isOtherRobotBlocking(robotPositionX, y, robotIndex)) {
+                            RobotsState.isOtherRobotBlocking(robotPositionX, y, robotIndex, robotsState)) {
                         return y - 1;
                     }
                 }
@@ -144,7 +146,7 @@ public final class Board {
             case left:
                 for (int x = robotPositionX - 1; x >= 0; --x) {
                     if (iImmutableBoard[x][robotPositionY].isBlocking() ||
-                            robotsState.isOtherRobotBlocking(x, robotPositionY, robotIndex)) {
+                            RobotsState.isOtherRobotBlocking(x, robotPositionY, robotIndex, robotsState)) {
                         return x + 1;
                     }
                 }
@@ -153,7 +155,7 @@ public final class Board {
             case right:
                 for (int x = robotPositionX + 1; x < iWidth; ++x) {
                     if (iImmutableBoard[x][robotPositionY].isBlocking() ||
-                            robotsState.isOtherRobotBlocking(x, robotPositionY, robotIndex)) {
+                            RobotsState.isOtherRobotBlocking(x, robotPositionY, robotIndex, robotsState)) {
                         return x - 1;
                     }
                 }
@@ -166,13 +168,21 @@ public final class Board {
 
     @Override
     public String toString() {
-        return toBoardString(new RobotsState(new byte[0], 0));
+        return toBoardString(null);
     }
 
-    public String toBoardString(final RobotsState robotsState) {
+    /**
+     * @param robotsState may be null, and if so we only return the immutable board string
+     * @return the string of the board
+     */
+    public String toBoardString(final Integer robotsState) {
         final String border = "-".repeat(2 * iWidth - 1);
         final StringBuilder sb = new StringBuilder();
-        sb.append("Board for state_id = " + robotsState.getId()).append('\n');
+
+        sb.append("Board for state_id = ")
+                .append(robotsState == null ? "<none>" : robotsState)
+                .append("%n");
+
         for (int y = -1; y < iHeight; y++) {
             for (int x = -1; x < iWidth; x++) {
                 // output the coordinates
@@ -192,7 +202,7 @@ public final class Board {
 
 
                 // first output robots then the immutable board
-                final int robotIndex = robotsState.getRobotAtPosition(x, y);
+                final int robotIndex = robotsState == null ? -1 : RobotsState.getRobotAtPosition(x, y, robotsState);
                 if (robotIndex != -1) {
                     // output robot
                     sb.append(robotIndex).append(' ');
@@ -225,7 +235,7 @@ public final class Board {
         return sb.toString();
     }
 
-    public List<String> boardToLogLines(final RobotsState robotsState) {
+    public List<String> boardToLogLines(final int robotsState) {
         final List<String> lines = new ArrayList<>();
 
         for (int y = -1; y < iHeight; y++) {
@@ -248,7 +258,7 @@ public final class Board {
 
 
                 // first output robots then the immutable board
-                final int robotIndex = robotsState.getRobotAtPosition(x, y);
+                final int robotIndex = RobotsState.getRobotAtPosition(x, y, robotsState);
                 if (robotIndex != -1) {
                     // output robot
                     sb.append(robotIndex).append(' ');

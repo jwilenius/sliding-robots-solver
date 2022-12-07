@@ -2,7 +2,6 @@ package net.booru.slidingrobots.rank;
 
 import net.booru.slidingrobots.algorithm.model.Solution;
 import net.booru.slidingrobots.common.Direction;
-import net.booru.slidingrobots.state.Board;
 import net.booru.slidingrobots.state.RobotsState;
 import net.booru.slidingrobots.state.RobotsStateUtil;
 
@@ -15,12 +14,12 @@ import java.util.LinkedList;
 public class BumpsCounter {
 
     public int apply(final Solution solution) {
-        final Deque<RobotsState> solutionPath = new LinkedList<>(solution.getSolutionPath());
-        RobotsState previousState = solutionPath.poll(); // discard start state
+        final Deque<Integer> solutionPath = new LinkedList<>(solution.getSolutionPath());
+        int previousState = solutionPath.poll(); // discard start state
 
         int bumps = 0;
         while (!solutionPath.isEmpty()) {
-            final RobotsState current = solutionPath.poll();
+            final int current = solutionPath.poll();
             bumps += countBumps(current, previousState);
             previousState = current;
         }
@@ -28,21 +27,21 @@ public class BumpsCounter {
         return bumps;
     }
 
-    private int countBumps(final RobotsState state, final RobotsState previousState) {
+    private int countBumps(final int state, final int previousState) {
 
         final int robotThatMoved = RobotsStateUtil.getRobotIndexOfFirstDifference(previousState, state);
         final Direction moveDirection = RobotsStateUtil.getRobotMovementDirection(previousState, state);
-        final int positionX = state.getPositionX(robotThatMoved);
-        final int positionY = state.getPositionY(robotThatMoved);
+        final int positionX = RobotsState.getPositionX(robotThatMoved, state);
+        final int positionY = RobotsState.getPositionY(robotThatMoved, state);
 
         int bumpCount = 0;
-        for (int otherRobot = 0; otherRobot < state.getRobotCount(); otherRobot++) {
+        for (int otherRobot = 0; otherRobot < RobotsState.getRobotCount(state); otherRobot++) {
             if (otherRobot == robotThatMoved) {
                 continue;
             }
 
-            final int xDist = Math.abs(positionX - state.getPositionX(otherRobot));
-            final int yDist = Math.abs(positionY - state.getPositionY(otherRobot));
+            final int xDist = Math.abs(positionX - RobotsState.getPositionX(otherRobot, state));
+            final int yDist = Math.abs(positionY - RobotsState.getPositionY(otherRobot, state));
             if (moveDirection == Direction.down || moveDirection == Direction.up) {
                 if (xDist == 0 && yDist == 1) {
                     bumpCount++;
