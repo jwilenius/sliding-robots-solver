@@ -44,19 +44,23 @@ class ProfileRunner {
         int noSolutionCount = 0;
 
         final Path mapsFilePath = Path.of(mapsFileName);
-        final boolean isSaveMapStrings = mapsFileName.isEmpty() || !Files.exists(mapsFilePath);
-        if (isSaveMapStrings) {
-            for (int i = 0; i < runCount; i++) {
-                final String seedString = SeedUtils.generateSeedString(dimX, dimY, isOneWay);
-                mapSeedStrings.add(seedString);
-                mapStrings.add(MapStringGenerator.generateFromSeed(seedString));
-            }
-        } else {
+
+        // (!a && !b ) || (a || !b)
+
+        // Load or generate map-strings
+        final boolean isLoadMapStrings = !mapsFileName.isEmpty() && Files.exists(mapsFilePath);
+        if (isLoadMapStrings) {
             // map file has format "<seedString><space><mapString><space><moveCount>\n"
             for (String line : Files.readAllLines(mapsFilePath)) {
                 final String[] lineSplit = line.split(" ");
                 mapSeedStrings.add(lineSplit[0]);
                 mapStrings.add(lineSplit[1]);
+            }
+        } else { // generate
+            for (int i = 0; i < runCount; i++) {
+                final String seedString = SeedUtils.generateSeedString(dimX, dimY, isOneWay);
+                mapSeedStrings.add(seedString);
+                mapStrings.add(MapStringGenerator.generateFromSeed(seedString));
             }
         }
 
@@ -85,6 +89,7 @@ class ProfileRunner {
             }
         }
 
+        final boolean isSaveMapStrings = !mapsFileName.isEmpty() && !Files.exists(mapsFilePath);
         if (isSaveMapStrings) {
             if (!Files.exists(mapsFilePath)) {
                 Files.createDirectories(mapsFilePath.getParent());
