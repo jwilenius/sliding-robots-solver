@@ -26,6 +26,36 @@ class MultiDimRankingTest {
     }
 
     @Test
+    void testStudents_explanatory_example() {
+        record Student(String name, int math, int english, int science) {}
+        var students = List.of(
+                new Student("Sara", 80, 90, 83),
+                new Student("Anne", 95, 87, 92),
+                new Student("Rose", 93, 85, 89),
+                new Student("Luke", 82, 91, 78),
+                new Student("Owen", 94, 83, 94)
+                );
+
+        final MultiDimRanking<Student> mdRanker = new MultiDimRanking<>(List.of(
+                new Rank<>("Math", student -> student.math, value -> 5),
+                new Rank<>("English", student -> student.english, value -> 5),
+                new Rank<>("Science", student -> student.science, value -> 5)
+        ));
+
+        final List<Student> ranked = mdRanker.applyRank(students);
+        final List<List<Student>> rankedGroups = mdRanker.getFinalGroups(students);
+        System.out.println("\nStudents:");
+        System.out.println(String.join("\n", students.stream().map(Student::toString).toList()));
+        System.out.println("\nRanked (natural order): ");
+        System.out.println(ranked.stream().map(Student::name).toList());
+        System.out.println("\nGroups:");
+        System.out.println(String.join("\n", rankedGroups.stream().map(List::toString).toList()));
+        System.out.println();
+
+        assert ranked.stream().map(Student::name).toList().equals(List.of("Luke", "Sara", "Rose", "Anne", "Owen"));
+    }
+
+    @Test
     void test2SeparateGroups() {
         final MultiDimRanking<Integer> mdRanker = new MultiDimRanking<>(List.of(
                 new Rank<>("R1", d -> d, d -> 1)
@@ -72,9 +102,12 @@ class MultiDimRankingTest {
 
         final List<List<Entity>> rankedGroups0 = mdRanker.getFinalGroups(unordered);
         assertEquals(3, rankedGroups0.size());
-        assertEquals(List.of(new Entity(100, 2), new Entity(110, 3)), rankedGroups0.get(0)); // 100 and 110 are within 10%, 2 < 3 and in the same group
-        assertEquals(List.of(new Entity(101, 5)), rankedGroups0.get(1));                     // 101 is within 10% but 5 puts it in its own group
-        assertEquals(List.of(new Entity(130, 6), new Entity(120, 7)), rankedGroups0.get(2)); // 120,130 are not within 10%, 6 & 7 are the same group
+        assertEquals(List.of(new Entity(100, 2), new Entity(110, 3)), rankedGroups0.get(0)); // 100 and 110 are within 10%, 2 < 3 and in
+        // the same group
+        assertEquals(List.of(new Entity(101, 5)), rankedGroups0.get(1));                     // 101 is within 10% but 5 puts it in its
+        // own group
+        assertEquals(List.of(new Entity(130, 6), new Entity(120, 7)), rankedGroups0.get(2)); // 120,130 are not within 10%, 6 & 7 are the
+        // same group
     }
 
     record Entity(
