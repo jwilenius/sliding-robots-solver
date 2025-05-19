@@ -45,8 +45,6 @@ class ProfileRunner {
 
         final Path mapsFilePath = Path.of(mapsFileName);
 
-        // (!a && !b ) || (a || !b)
-
         // Load or generate map-strings
         final boolean isLoadMapStrings = !mapsFileName.isEmpty() && Files.exists(mapsFilePath);
         if (isLoadMapStrings) {
@@ -111,11 +109,11 @@ class ProfileRunner {
         }
         cLogger.info("Total run count =   {}", mapStringsToDump.size());
         cLogger.info("  no solution # =   {}", noSolutionCount);
-        cLogger.info("Time Statistics (ms)");
-        cLogger.info("      time tot =   {}", timeStats.getSum());
-        cLogger.info("      time avg =   {}", timeStats.getMean());
-        cLogger.info("      time med =   {}", timeStats.getPercentile(50));
-        cLogger.info("      time std =   {}", timeStats.getStandardDeviation());
-        cLogger.info("      time var =   {}", timeStats.getVariance());
+        cLogger.info("Time Statistics");
+        cLogger.info("      time tot =   {} ms", timeStats.getSum());
+        cLogger.info("      time avg =   {} ms", timeStats.getMean());
+        cLogger.info("      time med =   {} ms", timeStats.getPercentile(50));
+        cLogger.info("      time std =   {} ms", timeStats.getStandardDeviation());
+        cLogger.info("      time var =   {} ms^2", timeStats.getVariance());
     }
 }
