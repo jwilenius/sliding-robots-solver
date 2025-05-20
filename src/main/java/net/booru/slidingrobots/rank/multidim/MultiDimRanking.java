@@ -12,14 +12,14 @@ import java.util.stream.Stream;
  * Rank a list of elements according to a supplied ordered list of {@link Rank}.
  *
  * <ol>
- * <li>Apply the first {@link Rank#valueFunction()} to each element in the List, and sort the elements according to these values.
- * <li>Split the sort result into so-called epsilon groups in the following way:
+ * <li> Apply the first {@link Rank#valueFunction()} to each element in the List, and sort the elements according to these values.
+ * <li> Split the sort result into so-called epsilon groups in the following way:
  * <ol>
- * <li>Take the first element in the List and create a (sub) tree of the elements in the List that are equal according to
- *     the {@link Rank#epsilonFunction()} (i.e., epsilon equal).
- * <li>Redo the first step on the remaining elements until the List is empty (each step creates a new (sub) tree).
+ * <li> Take the first element in the List and create a (sub) tree of the elements in the List that are equal according to
+ *      the {@link Rank#epsilonFunction()} (i.e., epsilon equal).
+ * <li> Redo the first step on the remaining elements until the List is empty (each step creates a new (sub) tree).
  * </ol>
- * <li>Recursively apply the algorithm on each epsilon group larger than one element, with the remaining ranks.
+ * <li> Recursively apply the algorithm on each epsilon group larger than one element, with the remaining ranks.
  * </ol>
  * <br><br>
  * Each {@link Rank} will be applied to each element at most once.
@@ -30,6 +30,13 @@ public final class MultiDimRanking<T> {
 
     private final List<Rank<T>> iRankers;
 
+    /**
+     * Create a Multi dimensional ranker that does ranking in the natural order as specified
+     * by the provided list of rankers. Epsilons in the rank are calculated on the first element
+     * in each new group.
+     *
+     * @param rankers the rankers to use, see {@link Rank}
+     */
     public MultiDimRanking(final List<Rank<T>> rankers) {
         if (rankers.isEmpty()) {
             throw new IllegalArgumentException("pre: Must supply at least one Rank!");
@@ -39,6 +46,9 @@ public final class MultiDimRanking<T> {
     }
 
     /**
+     * This is most likely the method you want to call if you only want an ordered list (natural order, best-first) of
+     * the elements ranked according the provided rankers.
+     *
      * @return the flattened result of applying this multidimensional sorter algorithm to {@code List}
      */
     public List<T> applyRank(final List<T> elements) {
@@ -62,7 +72,7 @@ public final class MultiDimRanking<T> {
     }
 
     /**
-     * @return the result (Rank values) for the provided element.
+     * @return the result of all rankers (Rank values) for the provided element, returned as a {@link RankResult<T>}
      */
     public RankResult<T> getResultForElement(final T element) {
         final Function<Rank<T>, Double> valueFunction = (Rank<T> rank) -> rank.valueFunction().apply(element);
@@ -78,7 +88,7 @@ public final class MultiDimRanking<T> {
     }
 
     /**
-     * @param elements
+     * @param elements the elements to sort
      * @return a List of sort trees where each element is an epsilon group of {@code List} of the first rank,
      * recursively sorted by the following ranks.
      */
@@ -87,8 +97,9 @@ public final class MultiDimRanking<T> {
             return List.of();
         }
 
-        // This is needed (and terrible) to get in-place sorting,
-        // also somewhat unnecessary now that we are building a tree.
+        // This is needed (and terrible) to get in-place sorting.
+        //  Prepare a mutable array of mutable results, will be sorted
+        //  and filled with values as we go deeper.
         @SuppressWarnings("unchecked") final RankResult<T>[] mutableResult = new RankResult[elements.size()];
         for (int i = 0; i < elements.size(); ++i) {
             mutableResult[i] = new RankResult<>(elements.get(i));
@@ -99,49 +110,27 @@ public final class MultiDimRanking<T> {
         return sortResults;
     }
 
-    private List<RankResult<T>> flatten(final List<SortTree<RankResult<T>>> results) {
-        return results.stream().flatMap((SortTree<RankResult<T>> sortTree) -> {
-            if (sortTree.isLeaf()) {
-                return Stream.of(((Leaf<RankResult<T>>) sortTree).getValue());
-            } else {
-                return flatten(sortTree.getChildren()).stream();
-            }
-        }).toList();
-    }
-
     private List<SortTree<RankResult<T>>> sort(final RankResult<T>[] mutableResults,
                                                final int lowerBoundInclusive,
                                                final int upperBoundExclusive,
                                                final List<Rank<T>> rankers,
-                                               final int level) {
+                                               final int rankLevel) {
         assert lowerBoundInclusive <= upperBoundExclusive : "pre: empty sort interval!";
 
-        final Rank<T> rank = rankers.get(level);
-        final ValueFunction<T> valueFunction = rank.valueFunction();
+        final Rank<T> rank = rankers.get(rankLevel);
+        calculateAllRankValues(mutableResults, rank, lowerBoundInclusive, upperBoundExclusive);
 
-        // Do all value calculations in parallel before doing (sequential) sorting
-        for (int index = lowerBoundInclusive; index < upperBoundExclusive; index++) {
-            final RankResult<T> rankResult = mutableResults[index];
-            final double value = valueFunction.apply(rankResult.getElement());
-            assert !Double.isInfinite(value) : "Infinite rank values is a problem!";
-
-            rankResult.addValue(value, rank); // add rank for debugging purposes (traceability)
-            if (DEBUG) {
-                cLog.info(rankResult.toString());
-            }
-        }
-
-        final Comparator<RankResult<T>> valueComparator = Comparator.comparingDouble(result -> result.getValue(level));
+        final Comparator<RankResult<T>> valueComparator = Comparator.comparingDouble(result -> result.getValue(rankLevel));
         Arrays.sort(mutableResults, lowerBoundInclusive, upperBoundExclusive, valueComparator);
 
-        final int nextLevel = level + 1;
+        final int nextLevel = rankLevel + 1;
         final List<SubGroup> subGroups = new ArrayList<>(upperBoundExclusive - lowerBoundInclusive);
 
         int fromIndexInclusive = lowerBoundInclusive;
         while (fromIndexInclusive < upperBoundExclusive) {
             final SubGroup subGroup =
-                    calculateGroupStartingAtIndexEndAtLevel(
-                            level,
+                    calculateEpsilonGroupAtLevel(
+                            rankLevel,
                             rank.epsilonFunction(),
                             mutableResults,
                             fromIndexInclusive,
@@ -156,22 +145,50 @@ public final class MultiDimRanking<T> {
                 .toList();
     }
 
+    /**
+     * Update the {@link RankResult<T>} in the mutableResults given the current {@code rank} and sub-group range.
+     *
+     * @param mutableResults      the results to update
+     * @param rank                current rank
+     * @param lowerBoundInclusive start index inclusive in the mutableResults array
+     * @param upperBoundExclusive end index exclusive in the mutableResults array
+     */
+    private void calculateAllRankValues(final RankResult<T>[] mutableResults,
+                                        final Rank<T> rank,
+                                        final int lowerBoundInclusive,
+                                        final int upperBoundExclusive) {
+        final ValueFunction<T> valueFunction = rank.valueFunction();
+
+        for (int index = lowerBoundInclusive; index < upperBoundExclusive; index++) {
+            final RankResult<T> rankResult = mutableResults[index];
+            final double value = valueFunction.apply(rankResult.getElement());
+            assert !Double.isInfinite(value) : "Infinite rank values is a problem!";
+            // We can use add since "level"s are done in order,
+            //  each added value is at the correct level.
+            //  rank is added for debugging purposes (traceability)
+            rankResult.addValue(value, rank);
+            if (DEBUG) {
+                cLog.info(rankResult.toString());
+            }
+        }
+    }
+
     private SortTree<RankResult<T>> getRankResultSortNode(final RankResult<T>[] mutableResults,
                                                           final int upperBoundExclusive,
                                                           final List<Rank<T>> rankers,
                                                           final int nextLevel,
                                                           final SubGroup subGroup) {
-        final RankResult<T> intervalWinner = mutableResults[subGroup.startInclusive()];
+        final RankResult<T> firstInGroup = mutableResults[subGroup.startInclusive()];
 
         final boolean isSingletonGroup = subGroup.endExclusive() - subGroup.startInclusive() == 1;
         final boolean areRankersLeft = nextLevel < rankers.size();
-
         final boolean isMoreWorkToPerform = !isSingletonGroup && areRankersLeft;
+
         if (isMoreWorkToPerform) {
+            // recursive call to sort for nextLevel rank, of the current subgroup
             final var epsilonGroupsForInterval =
                     sort(mutableResults, subGroup.startInclusive(), subGroup.endExclusive(), rankers, nextLevel);
-
-            return new Node<>(subGroup.epsilon(), intervalWinner, epsilonGroupsForInterval);
+            return new Node<>(subGroup.epsilon(), firstInGroup, epsilonGroupsForInterval);
         } else {
             assert subGroup.endExclusive() <= upperBoundExclusive : "inv: too large interval created!";
             final int actualUpperBound = subGroup.endExclusive();
@@ -181,20 +198,20 @@ public final class MultiDimRanking<T> {
                 leafs.add(new Leaf<>(Double.NaN, mutableResults[i]));
             }
 
-            return new Node<>(subGroup.epsilon(), intervalWinner, leafs);
+            return new Node<>(subGroup.epsilon(), firstInGroup, leafs);
         }
     }
 
-    private SubGroup calculateGroupStartingAtIndexEndAtLevel(final int level,
-                                                             final EpsilonFunction epsilonFunction,
-                                                             final RankResult<T>[] rankResults,
-                                                             final int fromIndexInclusive,
-                                                             final int upperBoundExclusive) {
-        final double resultValues = rankResults[fromIndexInclusive].getValue(level);
-        final double epsilon = Math.abs(epsilonFunction.apply(resultValues));
+    private SubGroup calculateEpsilonGroupAtLevel(final int rankLevel,
+                                                  final EpsilonFunction epsilonFunction,
+                                                  final RankResult<T>[] rankResults,
+                                                  final int fromIndexInclusive,
+                                                  final int upperBoundExclusive) {
+        final double firstValueInGroup = rankResults[fromIndexInclusive].getValue(rankLevel);
+        final double epsilon = Math.abs(epsilonFunction.apply(firstValueInGroup));
 
         int j = fromIndexInclusive + 1;
-        while (j < upperBoundExclusive && epsilonEquals(rankResults[j].getValue(level), resultValues, epsilon)) {
+        while (j < upperBoundExclusive && epsilonEquals(rankResults[j].getValue(rankLevel), firstValueInGroup, epsilon)) {
             ++j;
         }
 
@@ -206,12 +223,26 @@ public final class MultiDimRanking<T> {
     }
 
     /**
+     * Recursively flatten the tree of epsilon groups
+     */
+    private static <T> List<RankResult<T>> flatten(final List<SortTree<RankResult<T>>> results) {
+        return results.stream().flatMap((SortTree<RankResult<T>> sortTree) -> {
+            if (sortTree.isLeaf()) {
+                return Stream.of(((Leaf<RankResult<T>>) sortTree).getValue());
+            } else {
+                return flatten(sortTree.getChildren()).stream();
+            }
+        }).toList();
+    }
+
+    /**
      * Container class for maintaining start/end indices of epsilon groups.
      */
     private record SubGroup(
             double epsilon,
             int startInclusive,
-            int endExclusive) {
+            int endExclusive
+    ) {
     }
 }
 
