@@ -16,6 +16,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -35,7 +36,8 @@ class SlidingRobotsSearchAlgorithmTest {
 
     private List<TestCase> getTestCasesJson() throws IOException {
         final URL resource = getClass().getClassLoader().getResource("tests100.json");
-        final String jsonString = Files.readString(Path.of(resource.getPath()));
+        final String path = Objects.requireNonNull(resource).getPath();
+        final String jsonString = Files.readString(Path.of(path));
 
 
         final List<TestCase> testCases = new ObjectMapper().readValue(jsonString, new TypeReference<>() {
@@ -53,13 +55,13 @@ class SlidingRobotsSearchAlgorithmTest {
         println(game.getBoard().printBoard(game.getInitialRobotsState()));
 
         final Solution solution = executeAlgorithm(game, algorithmFactory, board);
-        printSolution(movesRequired, seed, game, solution);
+        printSolution(movesRequired, seed, solution);
 
         assertEquals(movesRequired, solution.getStatistics().getSolutionLength(),
                 "Wrong number of moves: " + solution.getAlgorithmName() + " for seed = " + seed);
     }
 
-    private static void printSolution(final int movesRequired, final String seed, final Game game, final Solution solution) {
+    private static void printSolution(final int movesRequired, final String seed, final Solution solution) {
         println("Algorithm : " + solution.getAlgorithmName());
         println("  Seed <" + seed + ">");
         println("  Solution Length = " + solution.getStatistics().getSolutionLength());
