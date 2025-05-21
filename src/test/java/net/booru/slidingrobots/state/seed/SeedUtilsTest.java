@@ -1,12 +1,15 @@
 package net.booru.slidingrobots.state.seed;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SeedUtilsTest {
+    private static final Logger cLogger = LoggerFactory.getLogger(SeedUtilsTest.class);
 
     @Test
     void testXorshiftMatchesErlangImpl() {
@@ -23,9 +26,9 @@ class SeedUtilsTest {
         );
 
         for (int i = 0; i < input0.size(); i++) {
-            System.out.println("test-" + i);
+            cLogger.debug("test-" + i);
             final var a = SeedUtils.xorshift32(input0.get(i), input1.get(i));
-            System.out.println(a);
+            cLogger.debug(a.toString());
             assertEquals(expected.get(i), a);
         }
     }

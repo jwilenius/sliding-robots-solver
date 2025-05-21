@@ -8,6 +8,8 @@ import net.booru.slidingrobots.state.Board;
 import net.booru.slidingrobots.state.Game;
 import net.booru.slidingrobots.state.RobotsStateUtil;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URL;
@@ -21,6 +23,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SlidingRobotsSearchAlgorithmTest {
+    private static final Logger cLogger = LoggerFactory.getLogger(SlidingRobotsSearchAlgorithmTest.class);
+
+    private static void println(Object s) {
+        cLogger.debug(s.toString());
+    }
+
+    private static void println(String s) {
+        cLogger.debug(s);
+    }
 
     private List<TestCase> getTestCasesJson() throws IOException {
         final URL resource = getClass().getClassLoader().getResource("tests100.json");
@@ -38,8 +49,8 @@ class SlidingRobotsSearchAlgorithmTest {
 
     private static void executeTestForMap(final int movesRequired, final String seed, final Game game, final Function<Board, SlidingRobotsSearchAlgorithm> algorithmFactory) throws NoSolutionException {
         final Board board = game.getBoard();
-        System.out.println("Map: ");
-        System.out.println(game.getBoard().printBoard(game.getInitialRobotsState()));
+        println("Map: ");
+        println(game.getBoard().printBoard(game.getInitialRobotsState()));
 
         final Solution solution = executeAlgorithm(game, algorithmFactory, board);
         printSolution(movesRequired, seed, game, solution);
@@ -49,17 +60,17 @@ class SlidingRobotsSearchAlgorithmTest {
     }
 
     private static void printSolution(final int movesRequired, final String seed, final Game game, final Solution solution) {
-        System.out.println("Algorithm : " + solution.getAlgorithmName());
-        System.out.println("  Seed <" + seed + ">");
-        System.out.println("  Solution Length = " + solution.getStatistics().getSolutionLength());
-        System.out.println("  Expected Length: " + movesRequired);
-        System.out.println("  ");
-        System.out.println("   " + solution.getStatistics());
-        System.out.println("  ");
-        System.out.println("   Solution json: " + solution.toJsonOutputString());
-        System.out.println("   Solution: ");
+        println("Algorithm : " + solution.getAlgorithmName());
+        println("  Seed <" + seed + ">");
+        println("  Solution Length = " + solution.getStatistics().getSolutionLength());
+        println("  Expected Length: " + movesRequired);
+        println("  ");
+        println("   " + solution.getStatistics());
+        println("  ");
+        println("   Solution json: " + solution.toJsonOutputString());
+        println("   Solution: ");
         for (var d : RobotsStateUtil.toStringHumanReadable(solution.getSolutionPath())) {
-            System.out.println("       " + d);
+            println("       " + d);
         }
     }
 
@@ -76,7 +87,7 @@ class SlidingRobotsSearchAlgorithmTest {
     void testSmall() {
         final int movesRequired = 10;
         final Game game = Game.valueOfMap("m:4:4,b:1:0,b:1:1,b:2:1,b:0:3,r:0:0,g:2:0");
-        System.out.println(game.getBoard().printBoard(game.getInitialRobotsState()));
+        println(game.getBoard().printBoard(game.getInitialRobotsState()));
         assertDoesNotThrow(
                 () -> executeTestForMap(movesRequired, "No seed", game, getAlgorithmFactory()));
     }
@@ -85,7 +96,7 @@ class SlidingRobotsSearchAlgorithmTest {
     void testSmallOneWay() {
         final int movesRequired = 4;
         final Game game = Game.valueOfMap("m:4:4:oneway,b:1:0,b:1:1,b:2:1,b:0:3,r:0:0,g:2:0");
-        System.out.println(game.getBoard().printBoard(game.getInitialRobotsState()));
+        println(game.getBoard().printBoard(game.getInitialRobotsState()));
         assertDoesNotThrow(
                 () -> executeTestForMap(movesRequired, "No seed", game, getAlgorithmFactory()));
     }
@@ -99,7 +110,7 @@ class SlidingRobotsSearchAlgorithmTest {
                 b b h .
                 . . . g
                 """);
-        System.out.println(game.getBoard().printBoard(game.getInitialRobotsState()));
+        println(game.getBoard().printBoard(game.getInitialRobotsState()));
         assertThrows(NoSolutionException.class,
                 () -> executeTestForMap(movesRequired, "No seed", game, getAlgorithmFactory()));
     }
@@ -150,7 +161,7 @@ class SlidingRobotsSearchAlgorithmTest {
                 () -> executeTestForMap(testCase.optimal, testCase.seed, game, getAlgorithmFactory()));
 
         timer.stop();
-        System.out.println(timer);
+        println(timer);
     }
 
     @Test
@@ -166,7 +177,7 @@ class SlidingRobotsSearchAlgorithmTest {
                 () -> executeTestForMap(testCase.optimal, testCase.seed, game, getAlgorithmFactory()));
 
         timer.stop();
-        System.out.println(timer);
+        println(timer);
     }
 
     @Test
@@ -177,15 +188,15 @@ class SlidingRobotsSearchAlgorithmTest {
         int testCaseCount = 0;
 
         for (final TestCase testCase : testCases) {
-            System.out.println("\n##################################################");
-            System.out.println("Test #" + testCaseCount++);
+            println("\n##################################################");
+            println("Test #" + testCaseCount++);
             final Game game = Game.valueOfMap(testCase.map);
             assertDoesNotThrow(
                     () -> executeTestForMap(testCase.optimal, testCase.seed, game, getAlgorithmFactory()));
         }
 
         timer.stop();
-        System.out.println(timer);
+        println(timer);
     }
 
     private static Function<Board, SlidingRobotsSearchAlgorithm> getAlgorithmFactory() {

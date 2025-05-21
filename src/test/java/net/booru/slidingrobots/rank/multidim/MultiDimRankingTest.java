@@ -1,12 +1,25 @@
 package net.booru.slidingrobots.rank.multidim;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MultiDimRankingTest {
+    private static final Logger cLogger = LoggerFactory.getLogger(MultiDimRankingTest.class);
+
+    private static void println(Object s) {
+        cLogger.debug(s.toString());
+    }
+
+    private static void println(String s) {
+        cLogger.debug(s);
+    }
+
+
     @Test
     void test4SeparateGroups() {
         final MultiDimRanking<Integer> mdRanker = new MultiDimRanking<>(List.of(
@@ -34,7 +47,7 @@ class MultiDimRankingTest {
                 new Student("Rose", 93, 85, 89),
                 new Student("Luke", 82, 91, 78),
                 new Student("Owen", 94, 83, 94)
-                );
+        );
 
         final MultiDimRanking<Student> mdRanker = new MultiDimRanking<>(List.of(
                 new Rank<>("Math", student -> student.math, value -> 5),
@@ -44,13 +57,13 @@ class MultiDimRankingTest {
 
         final List<Student> ranked = mdRanker.applyRank(students);
         final List<List<Student>> rankedGroups = mdRanker.getFinalGroups(students);
-        System.out.println("\nStudents:");
-        System.out.println(String.join("\n", students.stream().map(Student::toString).toList()));
-        System.out.println("\nRanked (natural order): ");
-        System.out.println(ranked.stream().map(Student::name).toList());
-        System.out.println("\nGroups:");
-        System.out.println(String.join("\n", rankedGroups.stream().map(List::toString).toList()));
-        System.out.println();
+        println("\nStudents:");
+        println(String.join("\n", students.stream().map(Student::toString).toList()));
+        println("\nRanked (natural order): ");
+        println(ranked.stream().map(Student::name).toList());
+        println("\nGroups:");
+        println(String.join("\n", rankedGroups.stream().map(List::toString).toList()));
+        println("");
 
         assert ranked.stream().map(Student::name).toList().equals(List.of("Luke", "Sara", "Rose", "Anne", "Owen"));
     }
